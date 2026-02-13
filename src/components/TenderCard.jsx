@@ -1,4 +1,5 @@
 import React from 'react';
+import { FaHandsHelping } from 'react-icons/fa';
 import { FaBuilding, FaCalendar, FaMapMarkerAlt, FaDownload, FaEye, FaHeart, FaUser } from 'react-icons/fa';
 import moment from 'moment';
 import './TenderCard.css';
