@@ -1,37 +1,33 @@
 import React from 'react';
-import { FaBuilding, FaHeart, FaHandsHelping } from 'react-icons/fa';
+import { FaBuilding, FaHeart, FaHandsHelping, FaGlobe, FaUniversity, FaFileAlt } from 'react-icons/fa';
 import './TabNavigation.css';
 
-const TabNavigation = ({ activeTab, setActiveTab }) => {
-  const tabs = [
-    {
-      id: 'bdjobs',
-      icon: <FaBuilding />,
-      label: 'BDJobs Tenders'
-    },
-    {
-      id: 'care',
-      icon: <FaHeart />,
-      label: 'CARE Bangladesh'
-    },
-    {
-      id: 'pksf',
-      icon: <FaHandsHelping />,
-      label: 'PKSF Tenders'
-    }
-  ];
+// Icon mapping for different scrapers
+const getIconForScraper = (scraperName) => {
+  const iconMap = {
+    bdjobs: <FaBuilding />,
+    care: <FaHeart />,
+    pksf: <FaHandsHelping />,
+    undp: <FaGlobe />,
+    worldbank: <FaUniversity />,
+    ungm: <FaFileAlt />  // Using FaFileAlt instead of FaUnitedNations
+  };
 
+  return iconMap[scraperName] || <FaBuilding />; // Default icon
+};
+
+const TabNavigation = ({ activeTab, setActiveTab, scrapers }) => {
   return (
     <div className="tabs-container">
     <div className="tabs">
-    {tabs.map(tab => (
+    {scrapers.map(scraper => (
       <button
-      key={tab.id}
-      className={`tab-btn ${activeTab === tab.id ? 'active' : ''}`}
-      onClick={() => setActiveTab(tab.id)}
+      key={scraper.name}
+      className={`tab-btn ${activeTab === scraper.name ? 'active' : ''}`}
+      onClick={() => setActiveTab(scraper.name)}
       >
-      {tab.icon}
-      <span>{tab.label}</span>
+      {getIconForScraper(scraper.name)}
+      <span>{scraper.display_name}</span>
       </button>
     ))}
     </div>

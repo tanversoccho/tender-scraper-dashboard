@@ -1,35 +1,54 @@
 import React from 'react';
-import { FaFileAlt, FaHeart, FaHandsHelping, FaChartBar } from 'react-icons/fa';
+import { FaFileAlt, FaHeart, FaHandsHelping, FaChartBar, FaGlobe, FaUniversity, FaBuilding } from 'react-icons/fa';
 import moment from 'moment';
 import './StatsGrid.css';
 
-const StatsGrid = ({ bdjobsCount, careCount, pksfCount, lastUpdated }) => {
-  const total = bdjobsCount + careCount + pksfCount;
+// Color mapping for different scrapers
+const getColorForScraper = (scraperName) => {
+  const colorMap = {
+    bdjobs: '#667eea',
+    care: '#ff6b6b',
+    pksf: '#20bf6b',
+    undp: '#009edb',      // UNDP blue
+    worldbank: '#1a4d8c',  // World Bank dark blue
+    ungm: '#4a90e2'        // UNGM blue
+  };
 
-  const stats = [
+  return colorMap[scraperName] || '#9b59b6'; // Default color
+};
+
+// Icon mapping for different scrapers
+const getIconForScraper = (scraperName) => {
+  const iconMap = {
+    bdjobs: <FaFileAlt />,
+    care: <FaHeart />,
+    pksf: <FaHandsHelping />,
+    undp: <FaGlobe />,
+    worldbank: <FaUniversity />,
+    ungm: <FaBuilding />  // Using FaBuilding instead of FaUnitedNations
+  };
+
+  return iconMap[scraperName] || <FaFileAlt />; // Default icon
+};
+
+const StatsGrid = ({ scrapers, tenderData, lastUpdated }) => {
+  // Calculate total tenders
+  const total = Object.values(tenderData).reduce((sum, items) => sum + (items?.length || 0), 0);
+
+  // Create stats for each scraper
+  const scraperStats = scrapers.map(scraper => ({
+    id: scraper.name,
+    icon: getIconForScraper(scraper.name),
+    title: scraper.display_name.toUpperCase(),
+    count: tenderData[scraper.name]?.length || 0,
+    color: getColorForScraper(scraper.name)
+  }));
+
+  // Add total stats card
+  const allStats = [
+    ...scraperStats,
     {
-      id: 1,
-      icon: <FaFileAlt />,
-      title: 'BDJOBS TENDERS',
-      count: bdjobsCount,
-      color: '#667eea'
-    },
-    {
-      id: 2,
-      icon: <FaHeart />,
-      title: 'CARE BANGLADESH',
-      count: careCount,
-      color: '#ff6b6b'
-    },
-    {
-      id: 3,
-      icon: <FaHandsHelping />,
-      title: 'PKSF TENDERS',
-      count: pksfCount,
-      color: '#20bf6b'
-    },
-    {
-      id: 4,
+      id: 'total',
       icon: <FaChartBar />,
       title: 'TOTAL TENDERS',
       count: total,
@@ -39,16 +58,18 @@ const StatsGrid = ({ bdjobsCount, careCount, pksfCount, lastUpdated }) => {
 
   return (
     <div className="stats-grid">
-    {stats.map(stat => (
+    {allStats.map(stat => (
       <div key={stat.id} className="stat-card" style={{ borderBottom: `4px solid ${stat.color}` }}>
       <div className="stat-icon" style={{ color: stat.color }}>
       {stat.icon}
       </div>
       <div className="stat-title">{stat.title}</div>
       <div className="stat-number">{stat.count}</div>
-      <div className="stat-date">
-      Last updated: {moment(lastUpdated).format('MMM D, YYYY h:mm A')}
-      </div>
+      {stat.id === 'total' && (
+        <div className="stat-date">
+        Last updated: {moment(lastUpdated).format('MMM D, YYYY h:mm A')}
+        </div>
+      )}
       </div>
     ))}
     </div>

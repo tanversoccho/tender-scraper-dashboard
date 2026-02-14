@@ -9,46 +9,62 @@ import traceback
 # Add scrapers to path
 sys.path.append(os.path.join(os.path.dirname(__file__), 'scrapers'))
 
-from scrapers.bdjobs import BDJobsScraper
-from scrapers.care import CareScraper
-from scrapers.pksf import PKSFScraper
+# Import the scraper registry
+from scrapers import get_all_scrapers, get_scraper, discover_scrapers
 
 app = Flask(__name__)
 CORS(app)  # Enable CORS for all routes
 
+# Discover all scrapers on startup
+scrapers = discover_scrapers()
+
+# Store last scraped data - dynamic cache
+cache = {}
+
 @app.route('/')
 def index():
     """Root endpoint - redirect to API documentation"""
+    scraper_list = get_all_scrapers()
+    endpoints = [
+            {'path': '/api/health', 'method': 'GET', 'description': 'Health check'},
+            {'path': '/api/scrapers', 'method': 'GET', 'description': 'List all available scrapers'},
+            {'path': '/api/stats', 'method': 'GET', 'description': 'Scraper statistics'},
+            {'path': '/api/scrape/all', 'method': 'GET', 'description': 'Run all scrapers'},
+            ]
+
+    # Add dynamic endpoints for each scraper
+    for scraper_name, scraper_info in scraper_list.items():
+        endpoints.append({
+            'path': f'/api/scrape/{scraper_name}',
+            'method': 'GET',
+            'description': f'Run {scraper_info["display_name"]} scraper'
+            })
+        endpoints.append({
+            'path': f'/api/data/{scraper_name}',
+            'method': 'GET',
+            'description': f'Get cached {scraper_info["display_name"]} data'
+            })
+
+    endpoints.extend([
+        {'path': '/api/export/json', 'method': 'GET', 'description': 'Export all data as JSON'},
+        {'path': '/api/export/csv', 'method': 'GET', 'description': 'Export all data as CSV'}
+        ])
+
     return jsonify({
         'name': 'Tender Scraper API',
         'version': '1.0.0',
         'description': 'API for scraping tender data from various sources',
         'documentation': {
-            'endpoints': [
-                {'path': '/api/health', 'method': 'GET', 'description': 'Health check'},
-                {'path': '/api/stats', 'method': 'GET', 'description': 'Scraper statistics'},
-                {'path': '/api/scrape/all', 'method': 'GET', 'description': 'Run all scrapers'},
-                {'path': '/api/scrape/bdjobs', 'method': 'GET', 'description': 'Run BDJobs scraper'},
-                {'path': '/api/scrape/care', 'method': 'GET', 'description': 'Run CARE scraper'},
-                {'path': '/api/scrape/pksf', 'method': 'GET', 'description': 'Run PKSF scraper'},
-                {'path': '/api/data/bdjobs', 'method': 'GET', 'description': 'Get cached BDJobs data'},
-                {'path': '/api/data/care', 'method': 'GET', 'description': 'Get cached CARE data'},
-                {'path': '/api/data/pksf', 'method': 'GET', 'description': 'Get cached PKSF data'},
-                {'path': '/api/export/json', 'method': 'GET', 'description': 'Export all data as JSON'},
-                {'path': '/api/export/csv', 'method': 'GET', 'description': 'Export all data as CSV'}
-                ],
+            'endpoints': endpoints,
             'usage': 'Add ?force=true to bypass cache and force fresh scraping'
             },
         'timestamp': datetime.now().isoformat()
         })
 
-
-# Store last scraped data
-cache = {
-        'bdjobs': {'data': [], 'timestamp': None},
-        'care': {'data': [], 'timestamp': None},
-        'pksf': {'data': [], 'timestamp': None}
-        }
+@app.route('/api/scrapers', methods=['GET'])
+def list_scrapers():
+    """List all available scrapers"""
+    return jsonify(get_all_scrapers())
 
 @app.route('/api/health', methods=['GET'])
 def health_check():
@@ -56,7 +72,8 @@ def health_check():
     return jsonify({
         'status': 'healthy',
         'timestamp': datetime.now().isoformat(),
-        'message': 'Tender Scraper API is running'
+        'message': 'Tender Scraper API is running',
+        'scrapers_loaded': len(scrapers)
         })
 
 @app.route('/api/scrape/all', methods=['GET'])
@@ -64,12 +81,11 @@ def scrape_all():
     """Run all scrapers and return combined data"""
     try:
         force_refresh = request.args.get('force', 'false').lower() == 'true'
+        scraper_list = get_all_scrapers()
 
-        results = {
-                'bdjobs': run_scraper('bdjobs', force_refresh),
-                'care': run_scraper('care', force_refresh),
-                'pksf': run_scraper('pksf', force_refresh)
-                }
+        results = {}
+        for scraper_name in scraper_list:
+            results[scraper_name] = run_scraper(scraper_name, force_refresh)
 
         return jsonify({
             'success': True,
@@ -88,11 +104,12 @@ def scrape_source(source):
     """Run specific scraper"""
     try:
         force_refresh = request.args.get('force', 'false').lower() == 'true'
+        scraper_list = get_all_scrapers()
 
-        if source not in ['bdjobs', 'care', 'pksf']:
+        if source not in scraper_list:
             return jsonify({
                 'success': False,
-                'error': f'Invalid source: {source}'
+                'error': f'Invalid source: {source}. Available: {list(scraper_list.keys())}'
                 }), 400
 
         data = run_scraper(source, force_refresh)
@@ -114,11 +131,17 @@ def scrape_source(source):
 @app.route('/api/data/<source>', methods=['GET'])
 def get_cached_data(source):
     """Get cached data without scraping"""
-    if source not in cache:
+    scraper_list = get_all_scrapers()
+
+    if source not in scraper_list:
         return jsonify({
             'success': False,
-            'error': f'Invalid source: {source}'
+            'error': f'Invalid source: {source}. Available: {list(scraper_list.keys())}'
             }), 400
+
+    # Initialize cache if not exists
+    if source not in cache:
+        cache[source] = {'data': [], 'timestamp': None}
 
     return jsonify({
         'success': True,
@@ -131,12 +154,23 @@ def get_cached_data(source):
 def get_stats():
     """Get scraping statistics"""
     stats = {}
-    for source in cache:
-        stats[source] = {
-                'count': len(cache[source]['data']),
-                'last_updated': cache[source]['timestamp'],
-                'cached': cache[source]['timestamp'] is not None
-                }
+    scraper_list = get_all_scrapers()
+
+    for source in scraper_list:
+        if source in cache:
+            stats[source] = {
+                    'count': len(cache[source]['data']),
+                    'last_updated': cache[source]['timestamp'],
+                    'cached': cache[source]['timestamp'] is not None,
+                    'display_name': scraper_list[source]['display_name']
+                    }
+        else:
+            stats[source] = {
+                    'count': 0,
+                    'last_updated': None,
+                    'cached': False,
+                    'display_name': scraper_list[source]['display_name']
+                    }
 
     return jsonify({
         'success': True,
@@ -146,6 +180,10 @@ def get_stats():
 
 def run_scraper(source, force_refresh=False):
     """Run specific scraper with caching"""
+    # Initialize cache if not exists
+    if source not in cache:
+        cache[source] = {'data': [], 'timestamp': None}
+
     # Check cache first
     if not force_refresh and cache[source]['timestamp'] is not None:
         # Return cached data if less than 5 minutes old
@@ -158,14 +196,9 @@ def run_scraper(source, force_refresh=False):
     # Run scraper
     print(f"Running {source} scraper...")
 
-    if source == 'bdjobs':
-        scraper = BDJobsScraper()
-        data = scraper.scrape()
-    elif source == 'care':
-        scraper = CareScraper()
-        data = scraper.scrape()
-    elif source == 'pksf':
-        scraper = PKSFScraper()
+    scraper_class = get_scraper(source)
+    if scraper_class:
+        scraper = scraper_class()
         data = scraper.scrape()
     else:
         data = []
@@ -185,7 +218,7 @@ def export_json():
         all_data = []
         for source in cache:
             for item in cache[source]['data']:
-                item_copy = item.copy()
+                item_copy = item.copy() if hasattr(item, 'copy') else dict(item)
                 item_copy['source'] = source
                 all_data.append(item_copy)
 
@@ -209,7 +242,7 @@ def export_csv():
         all_data = []
         for source in cache:
             for item in cache[source]['data']:
-                item_copy = item.copy()
+                item_copy = item.copy() if hasattr(item, 'copy') else dict(item)
                 item_copy['source'] = source
                 all_data.append(item_copy)
 
@@ -254,22 +287,20 @@ def export_csv():
 
 if __name__ == '__main__':
     print("=" * 60)
-    print("Tender Scraper API Server")
+    print("📊 Tender Scraper API Server")
     print("=" * 60)
-    print("Running with minimal dependencies (no pandas/numpy)")
-    print("\n Endpoints:")
-    print("  GET /api/health - Health check")
-    print("  GET /api/stats - Scraper statistics")
-    print("  GET /api/scrape/all - Run all scrapers")
-    print("  GET /api/scrape/bdjobs - Run BDJobs scraper")
-    print("  GET /api/scrape/care - Run CARE scraper")
-    print("  GET /api/scrape/pksf - Run PKSF scraper")
-    print("  GET /api/data/bdjobs - Get cached BDJobs data")
-    print("  GET /api/data/care - Get cached CARE data")
-    print("  GET /api/data/pksf - Get cached PKSF data")
-    print("  GET /api/export/json - Export all data as JSON")
-    print("  GET /api/export/csv - Export all data as CSV")
+    print(f"✅ Loaded {len(scrapers)} scrapers:")
+    for name, info in get_all_scrapers().items():
+        print(f"   - {info['display_name']} ({name})")
+    print("\n📱 Endpoints:")
+    print("   GET /api/health - Health check")
+    print("   GET /api/scrapers - List all scrapers")
+    print("   GET /api/stats - Scraper statistics")
+    print("   GET /api/scrape/all - Run all scrapers")
+    for name in get_all_scrapers():
+        print(f"   GET /api/scrape/{name} - Run {name} scraper")
+    print("   GET /api/export/json - Export all data as JSON")
+    print("   GET /api/export/csv - Export all data as CSV")
     print("=" * 60)
-    print("\n Server starting on http://localhost:5000")
+    print("\n🚀 Server starting on http://localhost:5000")
     app.run(debug=True, host='0.0.0.0', port=5000)
-

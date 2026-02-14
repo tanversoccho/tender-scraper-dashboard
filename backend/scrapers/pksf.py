@@ -1,6 +1,8 @@
 import requests
 from bs4 import BeautifulSoup
 from datetime import datetime
+from . import register_scraper
+@register_scraper('pksf', display_name='PKSF')
 
 class PKSFScraper:
     def __init__(self):

@@ -1,6 +1,8 @@
 import requests
 from bs4 import BeautifulSoup
 from datetime import datetime
+from . import register_scraper
+@register_scraper('care', display_name='Care')
 
 class CareScraper:
     def __init__(self):
@@ -78,7 +80,7 @@ class CareScraper:
                 {
                     "id": 1,
                     "deadline": "25 Dec 2024",
-                    "title": "Project Manager - Food Security",
+                    "title": "Project cdcsdcc Manager - Food Security",
                     "download_url": "#",
                     "organization": "CARE Bangladesh",
                     "source": "care"
@@ -86,7 +88,7 @@ class CareScraper:
                 {
                     "id": 2,
                     "deadline": "28 Dec 2024",
-                    "title": "Monitoring & Evaluation Officer",
+                    "title": "Monitoricdcsdcc ng & Evaluation Officer",
                     "download_url": "#",
                     "organization": "CARE Bangladesh",
                     "source": "care"
@@ -94,7 +96,7 @@ class CareScraper:
                 {
                     "id": 3,
                     "deadline": "30 Dec 2024",
-                    "title": "Finance and Admin Manager",
+                    "title": "Finance and Adcdcsdcc min Manager",
                     "download_url": "#",
                     "organization": "CARE Bangladesh",
                     "source": "care"
@@ -102,7 +104,7 @@ class CareScraper:
                 {
                     "id": 4,
                     "deadline": "02 Jan 2025",
-                    "title": "Gender Equality Specialist",
+                    "title": "Gender Equality Speciacdcsdcc list",
                     "download_url": "#",
                     "organization": "CARE Bangladesh",
                     "source": "care"

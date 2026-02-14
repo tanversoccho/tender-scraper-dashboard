@@ -2,6 +2,8 @@ import requests
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin
 from datetime import datetime
+from . import register_scraper
+@register_scraper('bdjobs', display_name='BD Jobs')
 
 class BDJobsScraper:
     def __init__(self):
