@@ -11,7 +11,7 @@ const PowerShellHeader = ({ loadTime }) => {
     </div>
     <div className="ps-path">
     <FaCode className="ps-icon-small" />
-     Acer@laptop E:\..\extra  master
+    //  Acer@laptop E:\..\extra  master
     </div>
     <div className="load-time">
     <FaClock className="ps-icon-small" />

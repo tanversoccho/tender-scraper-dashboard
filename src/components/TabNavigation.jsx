@@ -2,7 +2,6 @@ import React from 'react';
 import { FaBuilding, FaHeart, FaHandsHelping, FaGlobe, FaUniversity, FaFileAlt } from 'react-icons/fa';
 import './TabNavigation.css';
 
-// Icon mapping for different scrapers
 const getIconForScraper = (scraperName) => {
   const iconMap = {
     bdjobs: <FaBuilding />,
@@ -10,7 +9,7 @@ const getIconForScraper = (scraperName) => {
     pksf: <FaHandsHelping />,
     undp: <FaGlobe />,
     worldbank: <FaUniversity />,
-    ungm: <FaFileAlt />  // Using FaFileAlt instead of FaUnitedNations
+    ungm: <FaFileAlt />
   };
 
   return iconMap[scraperName] || <FaBuilding />; // Default icon

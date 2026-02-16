@@ -220,7 +220,7 @@ function App() {
   return (
     <div className="app">
     <div className="container">
-    <PowerShellHeader loadTime="2982ms" />
+    // <PowerShellHeader loadTime="2982ms" />
 
     {apiStatus === 'disconnected' && (
       <div className="warning-banner" style={{
