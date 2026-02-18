@@ -1,8 +1,10 @@
 .tab-content {
-  background: white;
+  background: #1f1d2e; /* Surface */
   padding: 25px;
   border-radius: 0 0 15px 15px;
   animation: fadeIn 0.3s ease;
+  font-family: 'Fira Code', 'Fira Mono', monospace;
+  color: #e0def4; /* Soft text */
 }
 
 @keyframes fadeIn {
@@ -22,28 +24,41 @@
   align-items: center;
   margin-bottom: 25px;
   padding-bottom: 15px;
-  border-bottom: 2px solid #f0f0f0;
+  border-bottom: 2px solid #31748f; /* Pine */
 }
 
 .tab-header h2 {
-  color: #333;
+  color: #ebbcba; /* Rose */
   font-size: 24px;
   font-weight: 600;
+  font-family: 'Fira Code', 'Fira Mono', monospace;
 }
 
 .tender-count {
-  background: #667eea;
-  color: white;
+  background: #31748f; /* Pine */
+  color: #e0def4; /* Soft text */
   padding: 8px 16px;
   border-radius: 20px;
   font-size: 14px;
   font-weight: 600;
+  font-family: 'Fira Code', 'Fira Mono', monospace;
+  border: 1px solid #c4a7e7; /* Iris accent */
 }
 
 .tender-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
   gap: 25px;
+}
+
+/* Optional: Add hover effect for tender grid items */
+.tender-grid > * {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.tender-grid > *:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(196, 167, 231, 0.15); /* Iris shadow */
 }
 
 @media (max-width: 768px) {
@@ -55,6 +70,10 @@
     flex-direction: column;
     gap: 10px;
     align-items: flex-start;
+  }
+
+  .tab-header h2 {
+    font-size: 20px;
   }
 
   .tender-grid {

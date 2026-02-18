@@ -25,7 +25,7 @@ class BDJobsScraper:
             # Try different selectors based on the actual website structure
             cards = soup.select("app-tender-card") or soup.select(".card") or soup.select("div[class*='tender']")
 
-            for i, card in enumerate(cards[:10]):  # Limit to 10 items
+            for i, card in enumerate(cards):  # Limit to 10 items
                 try:
                     # Organization name - try multiple selectors
                     org_div = card.select_one('div[title]') or card.select_one('.company-name') or card.select_one('.organization')

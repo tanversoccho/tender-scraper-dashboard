@@ -1,61 +1,90 @@
 .tender-card {
   transition: transform 0.2s, box-shadow 0.2s;
+  font-family: 'Fira Code', 'Fira Mono', monospace;
 }
 
 .tender-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 8px 20px rgba(25, 23, 36, 0.5); /* Base shadow */
 }
 
-/* Source-specific hover effects */
+/* Source-specific hover effects with Rosé Pine colors */
 .tender-card.source-bdjobs:hover {
-  border-color: #2E7D32 !important;
+  border-color: #31748f !important; /* Pine */
 }
 
 .tender-card.source-undp:hover {
-  border-color: #1E88E5 !important;
+  border-color: #eb6f92 !important; /* Love/Red */
 }
 
 .tender-card.source-worldbank:hover {
-  border-color: #F9A825 !important;
+  border-color: #f6c177 !important; /* Gold */
 }
 
 .tender-card.source-pksf:hover {
-  border-color: #6A1B9A !important;
+  border-color: #c4a7e7 !important; /* Iris/Purple */
 }
 
 .tender-card.source-care:hover {
-  border-color: #C2185B !important;
+  border-color: #ebbcba !important; /* Rose */
 }
 
 .tender-card.source-ungm:hover {
-  border-color: #00796B !important;
+  border-color: #31748f !important; /* Pine */
 }
 
-/* Badge styles */
-.badge-status-active { background: #2E7D32; }
-.badge-status-pipeline { background: #F9A825; }
-.badge-status-closed { background: #C62828; }
-.badge-status-dropped { background: #6A1B9A; }
-.badge-process { background: #1E88E5; }
-.badge-ref { background: #546E7A; }
-.badge-amount { background: #2E7D32; }
-.badge-stage { background: #6A1B9A; }
-.badge-views { background: #424242; }
-.badge-likes { background: #C2185B; }
-.badge-download { background: #00796B; }
-.badge-opportunity { background: #1565C0; }
-.badge-remaining { background: #C62828; }
-.badge-country { background: #4A148C; }
-.badge-author { background: #37474F; }
+/* Badge styles with Rosé Pine colors */
+.badge-status-active { background: #31748f; } /* Pine */
+.badge-status-pipeline { background: #f6c177; } /* Gold */
+.badge-status-closed { background: #eb6f92; } /* Love/Red */
+.badge-status-dropped { background: #6e6a86; } /* Muted */
+.badge-process { background: #c4a7e7; } /* Iris */
+.badge-ref { background: #908caa; } /* Muted text */
+.badge-amount { background: #31748f; } /* Pine */
+.badge-stage { background: #c4a7e7; } /* Iris */
+.badge-views { background: #6e6a86; } /* Muted darker */
+.badge-likes { background: #eb6f92; } /* Love/Red */
+.badge-download { background: #31748f; } /* Pine */
+.badge-opportunity { background: #ebbcba; } /* Rose */
+.badge-remaining { background: #eb6f92; } /* Love/Red */
+.badge-country { background: #c4a7e7; } /* Iris */
+.badge-author { background: #908caa; } /* Muted text */
 .badge-link {
-  background: #1E88E5;
+  background: #31748f; /* Pine */
   cursor: pointer;
   text-decoration: underline;
+  color: #e0def4; /* Soft text */
+  font-family: 'Fira Code', 'Fira Mono', monospace;
 }
 
 .badge-link:hover {
-  background: #1565C0;
+  background: #c4a7e7; /* Iris */
+  color: #191724; /* Base */
+}
+
+/* Badge text color for better contrast */
+.badge-status-active,
+.badge-status-pipeline,
+.badge-status-closed,
+.badge-status-dropped,
+.badge-process,
+.badge-ref,
+.badge-amount,
+.badge-stage,
+.badge-views,
+.badge-likes,
+.badge-download,
+.badge-opportunity,
+.badge-remaining,
+.badge-country,
+.badge-author,
+.badge-link {
+  color: #e0def4; /* Soft text */
+  font-family: 'Fira Code', 'Fira Mono', monospace;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
 }
 
 /* Responsive design */
@@ -67,5 +96,7 @@
   .tender-card h3 {
     font-size: 16px !important;
     padding-right: 60px !important;
+    color: #ebbcba; /* Rose */
+    font-family: 'Fira Code', 'Fira Mono', monospace;
   }
 }

@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import './App.css';
-import PowerShellHeader from './components/PowerShellHeader';
 import StatsGrid from './components/StatsGrid';
 import TabNavigation from './components/TabNavigation';
 import DynamicTab from './components/DynamicTab';
@@ -77,8 +76,11 @@ function App() {
       // Fallback to default scrapers if API fails
       const defaultScrapers = [
         { name: 'bdjobs', display_name: 'BD Jobs' },
-        { name: 'care', display_name: 'Care' },
-        { name: 'pksf', display_name: 'PKSF' }
+        { name: 'care', display_name: 'CARE' },
+        { name: 'pksf', display_name: 'PKSF' },
+        { name: 'undp', display_name: 'UNDP' },
+        { name: 'ungm', display_name: 'UNGM/UNOPS' },
+        { name: 'worldbank', display_name: 'WORLD BANK' }
       ];
       setScrapers(defaultScrapers);
       setActiveTab('bdjobs');
@@ -156,7 +158,10 @@ function App() {
           likes: "12",
           author: "PKSF Admin"
         }
-      ]
+      ],
+      undp: [],
+      ungm: [],
+      worldbank: []
     };
     setTenderData(sampleData);
     setInitialized(true);
@@ -172,147 +177,184 @@ function App() {
     checkApiHealth();
   };
 
+  // Rosé Pine color palette
+  const colors = {
+    base: '#191724',
+    surface: '#1f1d2e',
+    rose: '#ebbcba',
+    pine: '#31748f',
+    gold: '#f6c177',
+    love: '#eb6f92',
+    iris: '#c4a7e7',
+    text: '#e0def4',
+    muted: '#908caa',
+    overlay: '#26233a'
+  };
+
   // Show loading state
   if (loading && !initialized) {
     return (
-      <div className="app">
-      <div className="loading-screen" style={{
-        display: 'flex',
+      <div className="app" style={{ background: colors.base, minHeight: '100vh' }}>
+        <div className="loading-screen" style={{
+          display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
           height: '100vh',
-          background: '#0f0f1b'
-      }}>
-      <div className="loading-spinner" style={{
-        width: '50px',
-          height: '50px',
-          border: '3px solid rgba(102, 126, 234, 0.3)',
-          borderRadius: '50%',
-          borderTopColor: '#667eea',
-          animation: 'spin 1s ease-in-out infinite'
-      }}></div>
-      <div style={{ marginTop: '20px', color: '#fff' }}>Loading tender dashboard...</div>
-      {apiStatus === 'disconnected' && (
-        <div style={{ marginTop: '20px', textAlign: 'center' }}>
-        <p style={{ color: '#ffaa00' }}>⚠️ Backend server not running</p>
-        <button 
-        onClick={handleRetryConnection} 
-        style={{
-          marginTop: '10px',
-            padding: '10px 20px',
-            background: '#667eea',
-            color: '#fff',
-            border: 'none',
-            borderRadius: '5px',
-            cursor: 'pointer'
-        }}
-        >
-        Retry Connection
-        </button>
+          background: colors.base
+        }}>
+          <div className="loading-spinner" style={{
+            width: '50px',
+            height: '50px',
+            border: `3px solid ${colors.rose}30`,
+            borderRadius: '50%',
+            borderTopColor: colors.rose,
+            animation: 'spin 1s ease-in-out infinite'
+          }}></div>
+          <div style={{ marginTop: '20px', color: colors.text, fontFamily: 'Fira Code, monospace' }}>
+            Loading tender dashboard...
+          </div>
+          {apiStatus === 'disconnected' && (
+            <div style={{ marginTop: '20px', textAlign: 'center' }}>
+              <p style={{ color: colors.gold }}>⚠️ Backend server not running</p>
+              <button
+                onClick={handleRetryConnection}
+                style={{
+                  marginTop: '10px',
+                  padding: '10px 20px',
+                  background: colors.pine,
+                  color: colors.text,
+                  border: 'none',
+                  borderRadius: '5px',
+                  cursor: 'pointer',
+                  fontFamily: 'Fira Code, monospace'
+                }}
+              >
+                Retry Connection
+              </button>
+            </div>
+          )}
         </div>
-      )}
-      </div>
       </div>
     );
   }
 
   return (
-    <div className="app">
-    <div className="container">
-    // <PowerShellHeader loadTime="2982ms" />
+    <div className="app" style={{ background: colors.base, minHeight: '100vh' }}>
+      <div className="container">
+        {apiStatus === 'disconnected' && (
+          <div className="warning-banner" style={{
+            background: colors.gold,
+            color: colors.base,
+            padding: '10px',
+            margin: '10px 0',
+            borderRadius: '5px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '10px',
+            fontFamily: 'Fira Code, monospace'
+          }}>
+            <FiAlertCircle />
+            <span>Backend server is not running. Please start it with 'cd backend && python run.py'</span>
+            <button
+              onClick={handleRetryConnection}
+              style={{
+                marginLeft: 'auto',
+                padding: '5px 10px',
+                background: colors.base,
+                color: colors.gold,
+                border: 'none',
+                borderRadius: '3px',
+                cursor: 'pointer',
+                fontFamily: 'Fira Code, monospace'
+              }}
+            >
+              Retry
+            </button>
+          </div>
+        )}
 
-    {apiStatus === 'disconnected' && (
-      <div className="warning-banner" style={{
-        background: '#ffaa00',
-          color: '#000',
-          padding: '10px',
-          margin: '10px 0',
-          borderRadius: '5px',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '10px'
-      }}>
-      <FiAlertCircle />
-      <span>Backend server is not running. Please start it with 'cd backend && python run.py'</span>
-      <button 
-      onClick={handleRetryConnection}
-      style={{
-        marginLeft: 'auto',
-          padding: '5px 10px',
-          background: '#000',
-          color: '#fff',
-          border: 'none',
-          borderRadius: '3px',
-          cursor: 'pointer'
-      }}
-      >
-      Retry
-      </button>
+        {error && (
+          <div className="error" style={{
+            background: colors.love,
+            color: colors.base,
+            padding: '10px',
+            margin: '10px 0',
+            borderRadius: '5px',
+            fontFamily: 'Fira Code, monospace'
+          }}>
+            {error}
+          </div>
+        )}
+
+        <StatsGrid
+          scrapers={scrapers}
+          tenderData={tenderData}
+          lastUpdated={lastUpdated}
+        />
+
+        <TabNavigation
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+          scrapers={scrapers}
+        />
+
+        {activeTab && (
+          <DynamicTab
+            scraperName={activeTab}
+            displayName={scrapers.find(s => s.name === activeTab)?.display_name || activeTab}
+            data={tenderData[activeTab] || []}
+          />
+        )}
+
+        <Footer lastUpdated={lastUpdated} />
+
+        <button
+          className="refresh-btn"
+          onClick={handleRefresh}
+          disabled={loading}
+          style={{
+            position: 'fixed',
+            bottom: '20px',
+            right: '20px',
+            padding: '10px 20px',
+            background: colors.pine,
+            color: colors.text,
+            border: 'none',
+            borderRadius: '5px',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '5px',
+            fontFamily: 'Fira Code, monospace',
+            boxShadow: `0 5px 15px ${colors.base}80`,
+            transition: 'all 0.3s'
+          }}
+          onMouseEnter={(e) => {
+            e.target.style.background = colors.iris;
+            e.target.style.color = colors.base;
+          }}
+          onMouseLeave={(e) => {
+            e.target.style.background = colors.pine;
+            e.target.style.color = colors.text;
+          }}
+        >
+          <FiRefreshCw style={{ 
+            animation: loading ? 'spin 1s linear infinite' : 'none',
+            color: 'inherit'
+          }} />
+          {loading ? 'Refreshing...' : 'Refresh Data'}
+        </button>
       </div>
-    )}
 
-    {error && (
-      <div className="error" style={{
-        background: '#ff4444',
-          color: '#fff',
-          padding: '10px',
-          margin: '10px 0',
-          borderRadius: '5px'
-      }}>
-      {error}
-      </div>
-    )}
-
-    <StatsGrid
-    scrapers={scrapers}
-    tenderData={tenderData}
-    lastUpdated={lastUpdated}
-    />
-
-    <TabNavigation
-    activeTab={activeTab}
-    setActiveTab={setActiveTab}
-    scrapers={scrapers}
-    />
-
-    {activeTab && (
-      <DynamicTab
-      scraperName={activeTab}
-      displayName={scrapers.find(s => s.name === activeTab)?.display_name || activeTab}
-      data={tenderData[activeTab] || []}
-      />
-    )}
-
-    <Footer lastUpdated={lastUpdated} />
-
-    <button 
-    className="refresh-btn" 
-    onClick={handleRefresh} 
-    disabled={loading}
-    style={{
-      position: 'fixed',
-        bottom: '20px',
-        right: '20px',
-        padding: '10px 20px',
-        background: '#667eea',
-        color: '#fff',
-        border: 'none',
-        borderRadius: '5px',
-        cursor: 'pointer',
-        display: 'flex',
-        alignItems: 'center',
-        gap: '5px'
-    }}
-    >
-    <FiRefreshCw style={{ animation: loading ? 'spin 1s linear infinite' : 'none' }} />
-    {loading ? 'Refreshing...' : 'Refresh Data'}
-    </button>
-    </div>
-
-    <style>{`
+      <style>{`
         @keyframes spin {
           to { transform: rotate(360deg); }
+        }
+        body {
+          background: ${colors.base};
+          margin: 0;
+          font-family: 'Fira Code', monospace;
         }
       `}</style>
     </div>

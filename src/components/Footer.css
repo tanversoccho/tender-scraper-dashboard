@@ -1,10 +1,11 @@
 .footer {
   margin-top: 40px;
-  background: rgba(255,255,255,0.1);
+  background: rgba(31, 29, 46, 0.8); /* Surface with opacity */
   backdrop-filter: blur(10px);
   border-radius: 15px;
   padding: 30px;
-  color: white;
+  color: #e0def4; /* Soft text */
+  font-family: 'Fira Code', 'Fira Mono', monospace;
 }
 
 .footer-content {
@@ -22,11 +23,13 @@
 .footer-info p:first-child {
   font-size: 18px;
   font-weight: 600;
+  color: #ebbcba; /* Rose */
 }
 
 .update-time {
   font-size: 14px;
   opacity: 0.9;
+  color: #c4a7e7; /* Iris/Purple */
 }
 
 .footer-links {
@@ -35,23 +38,24 @@
 }
 
 .footer-links a {
-  color: white;
+  color: #e0def4; /* Soft text */
   font-size: 24px;
   transition: all 0.3s;
 }
 
 .footer-links a:hover {
   transform: translateY(-3px);
-  opacity: 0.8;
+  color: #f6c177; /* Gold */
 }
 
 .footer-bottom {
   margin-top: 20px;
   padding-top: 20px;
-  border-top: 1px solid rgba(255,255,255,0.2);
+  border-top: 1px solid rgba(235, 188, 186, 0.3); /* Rose with opacity */
   text-align: center;
   font-size: 14px;
   opacity: 0.8;
+  color: #908caa; /* Muted text */
 }
 
 @media (max-width: 768px) {

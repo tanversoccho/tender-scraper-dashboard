@@ -1,9 +1,10 @@
 .tabs-container {
-  background: white;
+  background: #1f1d2e; /* Surface */
   padding: 20px;
   border-radius: 15px 15px 0 0;
-  border-bottom: 3px solid #667eea;
+  border-bottom: 3px solid #31748f; /* Pine */
   margin-top: 20px;
+  font-family: 'Fira Code', 'Fira Mono', monospace;
 }
 
 .tabs {
@@ -15,7 +16,7 @@
 .tab-btn {
   padding: 12px 30px;
   border: none;
-  background: #f0f0f0;
+  background: #26233a; /* Surface light/overlay */
   cursor: pointer;
   font-size: 16px;
   font-weight: 600;
@@ -24,19 +25,20 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  color: #333;
+  color: #e0def4; /* Soft text */
+  font-family: 'Fira Code', 'Fira Mono', monospace;
 }
 
 .tab-btn.active {
-  background: #667eea;
-  color: white;
+  background: #31748f; /* Pine */
+  color: #e0def4; /* Soft text */
   transform: translateY(-2px);
-  box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+  box-shadow: 0 5px 15px rgba(49, 116, 143, 0.4); /* Pine shadow */
 }
 
 .tab-btn:hover:not(.active) {
-  background: #764ba2;
-  color: white;
+  background: #c4a7e7; /* Iris/Purple */
+  color: #191724; /* Base for contrast */
 }
 
 @media (max-width: 768px) {
