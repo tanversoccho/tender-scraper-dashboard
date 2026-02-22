@@ -9,7 +9,8 @@ const getIconForScraper = (scraperName) => {
     pksf: <FaHandsHelping />,
     undp: <FaGlobe />,
     worldbank: <FaUniversity />,
-    ungm: <FaFileAlt />
+    ungm: <FaFileAlt />,
+    bppa: <FaBuilding />
   };
 
   return iconMap[scraperName] || <FaBuilding />; // Default icon

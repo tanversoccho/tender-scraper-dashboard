@@ -102,7 +102,7 @@ class WorldBankScraper:
                     "id": 2,
                     "title": "Urban Health, Nutrition and Population Project",
                     "country": "Bangladesh",
-                    "project_id": P177561,
+                    "project_id": "P177561",
                     "amount": "$250.00 million",
                     "status": "Active",
                     "approval_date": "28-Mar-2024",

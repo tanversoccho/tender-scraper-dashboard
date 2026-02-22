@@ -11,7 +11,8 @@ const getColorForScraper = (scraperName) => {
     pksf: '#20bf6b',
     undp: '#009edb',      // UNDP blue
     worldbank: '#1a4d8c',  // World Bank dark blue
-    ungm: '#4a90e2'        // UNGM blue
+    ungm: '#4a90e2' ,
+    bppa: '#8B4513' // UNGM blue
   };
 
   return colorMap[scraperName] || '#9b59b6'; // Default color
@@ -25,7 +26,8 @@ const getIconForScraper = (scraperName) => {
     pksf: <FaHandsHelping />,
     undp: <FaGlobe />,
     worldbank: <FaUniversity />,
-    ungm: <FaBuilding />  // Using FaBuilding instead of FaUnitedNations
+    ungm: <FaBuilding /> , // Using FaBuilding instead of FaUnitedNations
+    bppa: <FaBuilding />
   };
 
   return iconMap[scraperName] || <FaFileAlt />; // Default icon

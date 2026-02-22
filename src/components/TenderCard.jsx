@@ -18,6 +18,7 @@ const TenderCard = ({ tender }) => {
     if (tender.source === 'undp' && tender.country) return `UNDP - ${tender.country}`;
     if (tender.source === 'worldbank') return `World Bank - ${tender.country || 'Bangladesh'}`;
     if (tender.source === 'ungm') return tender.organization || 'UNGM';
+    if (tender.source === 'bppa') return tender.procuring_entity || 'BPPA';
     return tender.source?.toUpperCase() || 'Unknown Source';
   };
 
@@ -41,6 +42,12 @@ const TenderCard = ({ tender }) => {
     if (tender.source === 'worldbank') {
       return { label: 'Approval', value: tender.approval_date || 'Pending' };
     }
+    if (tender.source === 'bppa') {
+      return { 
+        label: 'Closing', 
+        value: tender.closing_date ? `${tender.closing_date} ${tender.closing_time || ''}` : 'No closing date' 
+      };
+    }
     return { label: 'Date', value: tender.posted || tender.date || tender.deadline || 'Unknown' };
   };
 
@@ -60,6 +67,14 @@ const TenderCard = ({ tender }) => {
         if (tender.project_id) badges.push({ text: tender.project_id, class: 'badge-project-id' });
         if (tender.amount) badges.push({ text: `$${parseFloat(tender.amount).toLocaleString()}`, class: 'badge-amount' });
         if (tender.last_stage) badges.push({ text: tender.last_stage, class: 'badge-stage' });
+        break;
+
+      case 'bppa':
+        if (tender.reference_no) badges.push({ text: `Ref: ${tender.reference_no}`, class: 'badge-ref' });
+        if (tender.publication_date) badges.push({ text: `Published: ${tender.publication_date}`, class: 'badge-published' });
+        if (tender.place) badges.push({ text: tender.place, class: 'badge-place' });
+        if (tender.procuring_entity) badges.push({ text: tender.procuring_entity.substring(0, 30) + '...', class: 'badge-entity' });
+        if (tender.detail_url) badges.push({ text: 'View Details', class: 'badge-link', link: true });
         break;
 
       case 'bdjobs':
@@ -125,7 +140,9 @@ const TenderCard = ({ tender }) => {
         tender.source === 'pksf' ? '#6A1B9A' :
         tender.source === 'care' ? '#C2185B' :
         tender.source === 'ungm' ? '#00796B' :
-        tender.source === 'adb' ? '#1565C0' : '#424242',
+        tender.source === 'adb' ? '#1565C0' : 
+        tender.source === 'bppa' ? '#8B4513' : // Brown color for BPPA
+        '#424242',
         color: '#fff',
         padding: '4px 12px',
         borderRadius: '15px',
@@ -247,7 +264,20 @@ const TenderCard = ({ tender }) => {
       👤 {tender.author && `Author: ${tender.author}`}
       </div>
     )}
-
+    {tender.source === 'bppa' && (
+      <div style={{
+        marginTop: '10px',
+          fontSize: '12px',
+          color: '#aaa',
+          borderTop: '1px solid #333',
+          paddingTop: '10px'
+      }}>
+      <div> Reference: {tender.reference_no || 'N/A'}</div>
+      <div> Entity: {tender.procuring_entity || 'N/A'}</div>
+      <div> Place: {tender.place || 'N/A'}</div>
+      <div> Published: {tender.publication_date || 'N/A'}</div>
+      </div>
+    )}
     {/* Click hint */}
     {(tender.link || tender.download_url || tender.detail_url) && (
       <div style={{
