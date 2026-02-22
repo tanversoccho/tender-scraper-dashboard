@@ -4,25 +4,37 @@ import StatsGrid from './components/StatsGrid';
 import TabNavigation from './components/TabNavigation';
 import DynamicTab from './components/DynamicTab';
 import Footer from './components/Footer';
-import { FiRefreshCw, FiAlertCircle, FiDownload } from 'react-icons/fi';
+import { FiRefreshCw, FiAlertCircle } from 'react-icons/fi';
 import axios from 'axios';
 import DataExportPage from './pages/DataExportPage';
+// OR create a simple navigation component
 
-const API_BASE_URL = 'http://localhost:5000/api';
-
-// Rosé Pine color palette - MOVED OUTSIDE COMPONENT
-const colors = {
-  base: '#191724',
-  surface: '#1f1d2e',
-  rose: '#ebbcba',
-  pine: '#31748f',
-  gold: '#f6c177',
-  love: '#eb6f92',
-  iris: '#c4a7e7',
-  text: '#e0def4',
-  muted: '#908caa',
-  overlay: '#26233a'
-};
+// Add this after the StatsGrid component in your return (around line 290)
+<div style={{
+  display: 'flex',
+    justifyContent: 'flex-end',
+    marginBottom: '20px',
+    gap: '10px'
+}}>
+  <button
+onClick={() => window.location.href = '/export'} // If using simple navigation
+style={{
+  padding: '10px 20px',
+    background: colors.pine,
+    color: colors.text,
+    border: 'none',
+    borderRadius: '5px',
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '5px',
+    fontFamily: 'Fira Code, monospace'
+}}
+  >
+  <FiDownload /> Export Data
+  </button>
+  </div>
+  const API_BASE_URL = 'http://localhost:5000/api';
 
 function App() {
   const [activeTab, setActiveTab] = useState('');
@@ -33,7 +45,7 @@ function App() {
   const [lastUpdated, setLastUpdated] = useState(new Date());
   const [apiStatus, setApiStatus] = useState('checking');
   const [initialized, setInitialized] = useState(false);
-  const [showExportPage, setShowExportPage] = useState(false);
+  const [showExportPage, setShowExportPage] = useState(false); 
 
   // Check API health on mount
   useEffect(() => {
@@ -92,12 +104,13 @@ function App() {
       // Fallback to default scrapers if API fails
       const defaultScrapers = [
         { name: 'bdjobs', display_name: 'BD Jobs' },
+        { name: 'bppa', display_name: 'BPPA' },
         { name: 'care', display_name: 'CARE' },
+        { name: 'bppa', display_name: 'BPPA' },
         { name: 'pksf', display_name: 'PKSF' },
         { name: 'undp', display_name: 'UNDP' },
         { name: 'ungm', display_name: 'UNGM/UNOPS' },
-        { name: 'worldbank', display_name: 'WORLD BANK' },
-        { name: 'bppa', display_name: 'BPPA' }
+        { name: 'worldbank', display_name: 'WORLD BANK' }
       ];
       setScrapers(defaultScrapers);
       setActiveTab('bdjobs');
@@ -178,19 +191,8 @@ function App() {
       ],
       undp: [],
       ungm: [],
-      worldbank: [],
-      bppa: [
-        {
-          id: 1,
-          source: 'bppa',
-          title: "Selection of a Firm for GAP Information Website Development",
-          reference_no: "12.01.0000.924.040.07.0044.26-120",
-          procuring_entity: "Project Director, TARAPS",
-          publication_date: "15/02/2026",
-          closing_date: "02/03/2026",
-          place: "Dhaka"
-        }
-      ]
+      bppa: [],
+      worldbank: []
     };
     setTenderData(sampleData);
     setInitialized(true);
@@ -204,6 +206,20 @@ function App() {
     setError(null);
     setLoading(true);
     checkApiHealth();
+  };
+
+  // Rosé Pine color palette
+  const colors = {
+    base: '#191724',
+    surface: '#1f1d2e',
+    rose: '#ebbcba',
+    pine: '#31748f',
+    gold: '#f6c177',
+    love: '#eb6f92',
+    iris: '#c4a7e7',
+    text: '#e0def4',
+    muted: '#908caa',
+    overlay: '#26233a'
   };
 
   // Show loading state
@@ -259,7 +275,6 @@ function App() {
     return <DataExportPage onClose={() => setShowExportPage(false)} />;
   }
 
-  // Main dashboard view
   return (
     <div className="app" style={{ background: colors.base, minHeight: '100vh' }}>
     <div className="container">
@@ -308,7 +323,8 @@ function App() {
       </div>
     )}
 
-    {/* Export Button */}
+
+    {/* Export Button - Added here */}
     <div style={{
       display: 'flex',
         justifyContent: 'flex-end',

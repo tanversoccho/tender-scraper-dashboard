@@ -1,0 +1,88 @@
+/* src/pages/DataExportPage.css */
+.data-export-page {
+  min-height: 100vh;
+  font-family: 'Fira Code', monospace;
+}
+
+.export-container {
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .export-container {
+    padding: 10px;
+  }
+
+  .stats-cards {
+    grid-template-columns: 1fr !important;
+  }
+
+  .filter-section > div {
+    grid-template-columns: 1fr !important;
+  }
+
+  .export-actions {
+    flex-direction: column;
+  }
+
+  table {
+    font-size: 12px;
+  }
+
+  table td, table th {
+    padding: 8px 5px !important;
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #1f1d2e;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #31748f;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #c4a7e7;
+}
+
+/* Hover effects */
+button {
+  transition: all 0.3s ease;
+}
+
+button:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+}
+
+/* Table row hover */
+tbody tr:hover {
+  background: #26233a;
+}
+
+/* Input focus styles */
+input:focus, select:focus {
+  outline: none;
+  border-color: #ebbcba !important;
+  box-shadow: 0 0 0 2px rgba(235, 188, 186, 0.2);
+}
+
+/* Animation for new history entries */
+@keyframes highlight {
+  0% { background: #31748f40; }
+  100% { background: transparent; }
+}
+
+tbody tr:first-child {
+  animation: highlight 2s ease-out;
+}
