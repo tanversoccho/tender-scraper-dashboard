@@ -1,4 +1,3 @@
-import React from 'react';
 import './TenderCard.css';
 
 const TenderCard = ({ tender }) => {

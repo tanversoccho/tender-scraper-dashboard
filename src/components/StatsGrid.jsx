@@ -1,4 +1,3 @@
-import React from 'react';
 import { FaFileAlt, FaHeart, FaHandsHelping, FaChartBar, FaGlobe, FaUniversity, FaBuilding } from 'react-icons/fa';
 import moment from 'moment';
 import './StatsGrid.css';
@@ -9,13 +8,13 @@ const getColorForScraper = (scraperName) => {
     bdjobs: '#667eea',
     care: '#ff6b6b',
     pksf: '#20bf6b',
-    undp: '#009edb',      // UNDP blue
-    worldbank: '#1a4d8c',  // World Bank dark blue
+    undp: '#009edb',
+    worldbank: '#1a4d8c',
     ungm: '#4a90e2' ,
-    bppa: '#8B4513' // UNGM blue
+    bppa: '#8B4513'
   };
 
-  return colorMap[scraperName] || '#9b59b6'; // Default color
+  return colorMap[scraperName] || '#9b59b6';
 };
 
 // Icon mapping for different scrapers
@@ -26,11 +25,11 @@ const getIconForScraper = (scraperName) => {
     pksf: <FaHandsHelping />,
     undp: <FaGlobe />,
     worldbank: <FaUniversity />,
-    ungm: <FaBuilding /> , // Using FaBuilding instead of FaUnitedNations
+    ungm: <FaBuilding /> ,
     bppa: <FaBuilding />
   };
 
-  return iconMap[scraperName] || <FaFileAlt />; // Default icon
+  return iconMap[scraperName] || <FaFileAlt />;
 };
 
 const StatsGrid = ({ scrapers, tenderData, lastUpdated }) => {

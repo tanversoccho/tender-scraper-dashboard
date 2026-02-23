@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import './App.css';
 import StatsGrid from './components/StatsGrid';
 import TabNavigation from './components/TabNavigation';

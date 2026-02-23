@@ -1,4 +1,3 @@
-## backend/scrapers/__init__.py
 import sys
 import io
 import importlib

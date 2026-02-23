@@ -1,5 +1,3 @@
-// src/components/BPPATab.jsx
-import React from 'react';
 import TenderCard from './TenderCard';
 import './TabContent.css';
 

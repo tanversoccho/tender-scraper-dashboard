@@ -1,4 +1,3 @@
-import React from 'react';
 import { FaBuilding, FaHeart, FaHandsHelping, FaGlobe, FaUniversity, FaFileAlt } from 'react-icons/fa';
 import './TabNavigation.css';
 
