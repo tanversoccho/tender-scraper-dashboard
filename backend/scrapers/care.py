@@ -25,7 +25,7 @@ class CareScraper:
 
             if not project_tab:
                 print("⚠️ Project tab not found, using sample data")
-                return self.get_sample_data()
+                return []
 
             tenders = []
 
@@ -65,51 +65,18 @@ class CareScraper:
                     continue
 
             if not tenders:
-                return self.get_sample_data()
+                return []
 
             print(f"✅ Scraped {len(tenders)} tenders from CARE Bangladesh")
             return tenders
 
         except Exception as e:
             print(f"❌ Error scraping CARE Bangladesh: {e}")
-            return self.get_sample_data()
+            return []
 
     def get_sample_data(self):
         """Return sample data if scraping fails"""
-        return [
-                {
-                    "id": 1,
-                    "deadline": "25 Dec 2024",
-                    "title": "Project cdcsdcc Manager - Food Security",
-                    "download_url": "#",
-                    "organization": "CARE Bangladesh",
-                    "source": "care"
-                    },
-                {
-                    "id": 2,
-                    "deadline": "28 Dec 2024",
-                    "title": "Monitoricdcsdcc ng & Evaluation Officer",
-                    "download_url": "#",
-                    "organization": "CARE Bangladesh",
-                    "source": "care"
-                    },
-                {
-                    "id": 3,
-                    "deadline": "30 Dec 2024",
-                    "title": "Finance and Adcdcsdcc min Manager",
-                    "download_url": "#",
-                    "organization": "CARE Bangladesh",
-                    "source": "care"
-                    },
-                {
-                    "id": 4,
-                    "deadline": "02 Jan 2025",
-                    "title": "Gender Equality Speciacdcsdcc list",
-                    "download_url": "#",
-                    "organization": "CARE Bangladesh",
-                    "source": "care"
-                    }
-                ]
+        return []
 
 if __name__ == "__main__":
     scraper = CareScraper()

@@ -75,51 +75,14 @@ class WorldBankScraper:
             driver.quit()
 
             if not projects:
-                return self.get_sample_data()
+                return []
 
             return projects
 
         except Exception as e:
             print(f"❌ Error scraping World Bank: {e}")
-            return self.get_sample_data()
+            return []
 
     def get_sample_data(self):
         """Return sample World Bank data"""
-        return [
-                {
-                    "id": 1,
-                    "title": "Bangladesh Road Safety Project",
-                    "country": "Bangladesh",
-                    "project_id": "P171023",
-                    "amount": "$300.00 million",
-                    "status": "Active",
-                    "approval_date": "28-Jun-2023",
-                    "last_updated": "31-Jan-2025",
-                    "last_stage": "Implementation",
-                    "source": "worldbank"
-                    },
-                {
-                    "id": 2,
-                    "title": "Urban Health, Nutrition and Population Project",
-                    "country": "Bangladesh",
-                    "project_id": "P177561",
-                    "amount": "$250.00 million",
-                    "status": "Active",
-                    "approval_date": "28-Mar-2024",
-                    "last_updated": "10-Feb-2025",
-                    "last_stage": "Implementation",
-                    "source": "worldbank"
-                    },
-                {
-                    "id": 3,
-                    "title": "Bangladesh Environmental Sustainability and Transformation Project",
-                    "country": "Bangladesh",
-                    "project_id": "P180514",
-                    "amount": "$325.00 million",
-                    "status": "Active",
-                    "approval_date": "20-Jun-2024",
-                    "last_updated": "05-Feb-2025",
-                    "last_stage": "Implementation",
-                    "source": "worldbank"
-                    }
-                ]
+        return []

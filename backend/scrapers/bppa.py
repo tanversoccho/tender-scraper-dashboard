@@ -23,25 +23,25 @@ class BPPAScraper:
             response = requests.get(self.url, headers=self.headers, timeout=30)
             if response.status_code != 200:
                 print(f"⚠️ Failed with status: {response.status_code}")
-                return self.get_sample_data()
+                return []
             soup = BeautifulSoup(response.content, 'html.parser')
             # Find the main content div
             content_div = soup.select_one('div#bodyContent') or soup.select_one('.content')
             if not content_div:
                 print("⚠️ Content div not found")
-                return self.get_sample_data()
+                return []
 
             # Find the table
             table = content_div.find('table')
             if not table:
                 print("⚠️ Table not found")
-                return self.get_sample_data()
+                return []
 
             # Get all rows from tbody
             tbody = table.find('tbody')
             if not tbody:
                 print("⚠️ Table body not found")
-                return self.get_sample_data()
+                return []
 
             rows = tbody.find_all('tr')
             print(f"Found {len(rows)} tender notices")
@@ -130,14 +130,14 @@ class BPPAScraper:
 
             if not tenders:
                 print("⚠️ No tenders found, using sample data")
-                return self.get_sample_data()
+                return []
 
             print(f"✅ Scraped {len(tenders)} tenders from BPPA")
             return tenders
 
         except Exception as e:
             print(f"❌ Error scraping BPPA: {e}")
-            return self.get_sample_data()
+            return []
 
     def scrape_with_filters(self, ministry_id=None, agency_id=None):
         """
@@ -150,73 +150,7 @@ class BPPAScraper:
 
     def get_sample_data(self):
         """Return sample BPPA data based on actual page content"""
-        return [
-                {
-                    "id": 1,
-                    "sl_no": "1",
-                    "title": "Selection of a Firm for GAP Information Website Development & Integration with Apps for BACB",
-                    "reference_no": "12.01.0000.924.040.07.0044.26-120",
-                    "procuring_entity": "Project Director, TARAPS",
-                    "publication_date": "15/02/2026",
-                    "closing_date": "02/03/2026",
-                    "closing_time": "14.00",
-                    "place": "Dhaka",
-                    "detail_url": "https://www.bppa.gov.bd/advertisement-services/details-10519.html",
-                    "source": "bppa"
-                    },
-                {
-                    "id": 2,
-                    "sl_no": "2",
-                    "title": "Policy Reform Consultancy Service (Firm /International Organization /Development Partner / Others)",
-                    "reference_no": "12.01.00000.924.040.07.0034.25-",
-                    "procuring_entity": "Project Director, TARAPS",
-                    "publication_date": "15/02/2026",
-                    "closing_date": "02/03/2026",
-                    "closing_time": "15.00",
-                    "place": "Dhaka",
-                    "detail_url": "https://www.bppa.gov.bd/advertisement-services/details-10520.html",
-                    "source": "bppa"
-                    },
-                {
-                    "id": 3,
-                    "sl_no": "3",
-                    "title": "For Selection of an Individual Consultant for the audit of the cash compensation disbursements to PAPs",
-                    "reference_no": "46.06.0000.330.007.20.2025-95",
-                    "procuring_entity": "Project Director, Chattogram Metropolitan Sanitation Project for North Kattoli Catchment",
-                    "publication_date": "10/02/2026",
-                    "closing_date": "01/03/2026",
-                    "closing_time": "14:00 hours (BST)",
-                    "place": "Chattogram",
-                    "detail_url": "https://www.bppa.gov.bd/advertisement-services/details-10518.html",
-                    "source": "bppa"
-                    },
-                {
-                    "id": 4,
-                    "sl_no": "4",
-                    "title": "Urban Planning Survey and Studies for \"Formulation of Strategic Plan of Dhaka Peripheral Region\"",
-                    "reference_no": "25.03.0000.000.002.14.0035.25",
-                    "procuring_entity": "Project Director, Formulation of Strategic Plan of Dhaka Peripheral Region",
-                    "publication_date": "09/02/2026",
-                    "closing_date": "18/02/2026",
-                    "closing_time": "11.00 a.m",
-                    "place": "Dhaka",
-                    "detail_url": "https://www.bppa.gov.bd/advertisement-services/details-10517.html",
-                    "source": "bppa"
-                    },
-            {
-                    "id": 5,
-                    "sl_no": "5",
-                    "title": "Selection of Firm for Mid-term Review of SMART Project",
-                    "reference_no": "53.23.0000.043.03.020.25.644 (PKSF/SMART/S-09)",
-                    "procuring_entity": "Deputy Managing Director-4, PKSF",
-                    "publication_date": "08/02/2026",
-                    "closing_date": "24/02/2026",
-                    "closing_time": "01:00 PM",
-                    "place": "Dhaka",
-                    "detail_url": "https://www.bppa.gov.bd/advertisement-services/details-10514.html",
-                    "source": "bppa"
-                    }
-        ]
+        return []
 
     def parse_date(self, date_str):
         """Helper method to parse dates from various formats"""

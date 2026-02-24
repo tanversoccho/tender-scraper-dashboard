@@ -1,10 +1,6 @@
-# backend/scrapers/adb.py
-import requests
 from bs4 import BeautifulSoup
 from datetime import datetime
 import cloudscraper
-import time
-import random
 from urllib.parse import urljoin
 
 class ADBScraper:
@@ -22,14 +18,14 @@ class ADBScraper:
 
             if response.status_code != 200:
                 print(f"⚠️ Failed with status: {response.status_code}")
-                return self.get_sample_data()
+                return []
 
             soup = BeautifulSoup(response.content, 'html.parser')
 
             # Find project items
             project_divs = (
-                    soup.select('.list .item.linked') or 
-                    soup.select('.project-item') or 
+                    soup.select('.list .item.linked') or
+                    soup.select('.project-item') or
                     soup.select('.views-row')
                     )
 
@@ -91,7 +87,7 @@ class ADBScraper:
                     continue
 
             if not projects:
-                return self.get_sample_data()
+                return []
 
             print(f"✅ Scraped {len(projects)} projects from ADB")
             return projects
@@ -102,41 +98,7 @@ class ADBScraper:
 
     def get_sample_data(self):
         """Return sample data if scraping fails"""
-        return [
-                {
-                    "id": 1,
-                    "title": "Third Urban Governance and Infrastructure Improvement Project",
-                    "project_id": "55032-002",
-                    "status": "Active",
-                    "approval_date": "2024",
-                    "sector": "Water and other urban infrastructure and services",
-                    "url": "#",
-                    "summary": "55032-002; Bangladesh; Water and other urban infrastructure and services",
-                    "source": "adb"
-                    },
-                {
-                    "id": 2,
-                    "title": "SASEC Road Connectivity Project",
-                    "project_id": "52057-003",
-                    "status": "Active",
-                    "approval_date": "2023",
-                    "sector": "Transport",
-                    "url": "#",
-                    "summary": "52057-003; Bangladesh; Transport",
-                    "source": "adb"
-                    },
-                {
-                    "id": 3,
-                    "title": "Skills for Employment Investment Program",
-                    "project_id": "47057-003",
-                    "status": "Active",
-                    "approval_date": "2024",
-                    "sector": "Education",
-                    "url": "#",
-                    "summary": "47057-003; Bangladesh; Education",
-                    "source": "adb"
-                    }
-                ]
+        return []
 
 # For direct testing
 if __name__ == "__main__":

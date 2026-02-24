@@ -23,7 +23,7 @@ class PKSFScraper:
             main = soup.select_one("#main-content") or soup.select_one(".content-area") or soup.select_one("main")
             if not main:
                 print("⚠️ Main content not found, using sample data")
-                return self.get_sample_data()
+                return []
 
             posts = main.select(".wgl_col-4.item") or main.select(".post") or main.select(".tender-item") or main.select("article")
 
@@ -68,69 +68,18 @@ class PKSFScraper:
                     continue
 
             if not results:
-                return self.get_sample_data()
+                return []
 
             print(f"✅ Scraped {len(results)} tenders from PKSF")
             return results
 
         except Exception as e:
             print(f"❌ Error scraping PKSF: {e}")
-            return self.get_sample_data()
+            return []
 
     def get_sample_data(self):
         """Return sample data if scraping fails"""
-        return [
-                {
-                    "id": 1,
-                    "date": "15 Dec 2024",
-                    "title": "Procurement of Office Equipment",
-                    "link": "#",
-                    "views": "234",
-                    "likes": "12",
-                    "author": "PKSF Admin",
-                    "source": "pksf"
-                    },
-                {
-                    "id": 2,
-                    "date": "16 Dec 2024",
-                    "title": "Consultancy Services for Impact Assessment",
-                    "link": "#",
-                    "views": "156",
-                    "likes": "8",
-                    "author": "PKSF",
-                    "source": "pksf"
-                    },
-                {
-                    "id": 3,
-                    "date": "17 Dec 2024",
-                    "title": "Construction of Training Center",
-                    "link": "#",
-                    "views": "189",
-                    "likes": "15",
-                    "author": "PKSF",
-                    "source": "pksf"
-                    },
-                {
-                    "id": 4,
-                    "date": "18 Dec 2024",
-                    "title": "ICT Equipment Supply",
-                    "link": "#",
-                    "views": "98",
-                    "likes": "5",
-                    "author": "PKSF",
-                    "source": "pksf"
-                    },
-                {
-                    "id": 5,
-                    "date": "19 Dec 2024",
-                    "title": "Research Study on Microfinance",
-                    "link": "#",
-                    "views": "145",
-                    "likes": "11",
-                    "author": "PKSF",
-                    "source": "pksf"
-                    }
-        ]
+        return []
 
 if __name__ == "__main__":
     scraper = PKSFScraper()

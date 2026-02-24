@@ -62,64 +62,18 @@ class BDJobsScraper:
             # If no tenders found, return sample data
             if not tenders:
                 print("⚠️ No tenders found, using sample data")
-                return self.get_sample_data()
+                return []
 
             print(f"✅ Scraped {len(tenders)} tenders from BDJobs")
             return tenders
 
         except Exception as e:
             print(f"❌ Error scraping BDJobs: {e}")
-            return self.get_sample_data()
+            return []
 
     def get_sample_data(self):
         """Return sample data if scraping fails"""
-        return [
-                {
-                    "id": 1,
-                    "organization": "World Bank",
-                    "title": "Consultant for Digital Transformation Project",
-                    "link": "#",
-                    "logo": "https://via.placeholder.com/60x60?text=WB",
-                    "posted": datetime.now().strftime("%Y-%m-%d"),
-                    "source": "bdjobs"
-                    },
-                {
-                    "id": 2,
-                    "organization": "UNDP Bangladesh",
-                    "title": "Supply and Installation of IT Equipment",
-                    "link": "#",
-                    "logo": "https://via.placeholder.com/60x60?text=UNDP",
-                    "posted": datetime.now().strftime("%Y-%m-%d"),
-                    "source": "bdjobs"
-                    },
-                {
-                    "id": 3,
-                    "organization": "Asian Development Bank",
-                    "title": "Technical Assistance for Rural Development",
-                    "link": "#",
-                    "logo": "https://via.placeholder.com/60x60?text=ADB",
-                    "posted": datetime.now().strftime("%Y-%m-%d"),
-                    "source": "bdjobs"
-                    },
-                {
-                    "id": 4,
-                    "organization": "UNICEF",
-                    "title": "Education Sector Development Program",
-                    "link": "#",
-                    "logo": "https://via.placeholder.com/60x60?text=UNICEF",
-                    "posted": datetime.now().strftime("%Y-%m-%d"),
-                    "source": "bdjobs"
-                    },
-                {
-                    "id": 5,
-                    "organization": "USAID",
-                    "title": "Health Systems Strengthening",
-                    "link": "#",
-                    "logo": "https://via.placeholder.com/60x60?text=USAID",
-                    "posted": datetime.now().strftime("%Y-%m-%d"),
-                    "source": "bdjobs"
-                    }
-                ]
+        return []
 
 # For direct execution
 if __name__ == "__main__":

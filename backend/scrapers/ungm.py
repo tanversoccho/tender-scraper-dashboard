@@ -27,7 +27,7 @@ class UNGMScraper:
 
             if response.status_code != 200:
                 print(f"❌ Failed with status: {response.status_code}")
-                return self.get_sample_data()
+                return []
 
             soup = BeautifulSoup(response.content, 'html.parser')
 
@@ -115,54 +115,17 @@ class UNGMScraper:
             print(f"📊 Bangladesh notices: {len(bangladesh_notices)}")
 
             if not notices:
-                return self.get_sample_data()
+                return []
 
             return notices
 
         except Exception as e:
             print(f"❌ Error scraping UNGM: {e}")
-            return self.get_sample_data()
+            return []
 
     def get_sample_data(self):
         """Return sample UNOPS data from the page"""
-        return [
-                {
-                    "id": 1,
-                    "title": "Construction of Dedicated Accommodation Facility to Enhance BIPSOT's Capacity for Training Female Peacekeepers",
-                    "reference": "ITB/2026/61380",
-                    "organization": "UNOPS",
-                    "opportunity_type": "Invitation to bid",
-                    "published_date": "12-Feb-2026",
-                    "deadline": "01-Mar-2026 11:00 (GMT 0.00)",
-                    "country": "Bangladesh",
-                    "remaining_days": "Expires within 15 days",
-                    "source": "ungm"
-                    },
-                {
-                    "id": 2,
-                    "title": "Expression of Interest (EOI): Third-Party Monitoring (TPM) Services",
-                    "reference": "Expression of Interest (EOI): Third-Party Monitoring (TPM) Services",
-                    "organization": "UNOPS",
-                    "opportunity_type": "Request for EOI",
-                    "published_date": "21-Jan-2026",
-                    "deadline": "14-Feb-2026 00:00 (GMT 3.00)",
-                    "country": "Multiple destinations",
-                    "remaining_days": "Expires within 24 hours",
-                    "source": "ungm"
-                    },
-                {
-                    "id": 3,
-                    "title": "Provision of Small Grants Programme for World Day for Assistive Technology (AT) Celebration in Asia",
-                    "reference": "UNOPS/FO/2026/19 - ATscale/Grant/2026/23067-002/007",
-                    "organization": "UNOPS",
-                    "opportunity_type": "Grant support-call for proposal",
-                    "published_date": "16-Jan-2026",
-                    "deadline": "16-Feb-2026 12:00 (GMT 2.00)",
-                    "country": "Multiple destinations",
-                    "remaining_days": "Expires within 2 days",
-                    "source": "ungm"
-                    }
-                ]
+        return []
 
     def filter_by_country(self, notices, country="Bangladesh"):
         """Filter notices by country"""

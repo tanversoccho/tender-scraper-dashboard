@@ -28,7 +28,7 @@ class UNDPScraper:
 
             if response.status_code != 200:
                 print(f"❌ Failed with status: {response.status_code}")
-                return self.get_sample_data()
+                return []
 
             soup = BeautifulSoup(response.content, 'html.parser')
 
@@ -117,68 +117,17 @@ class UNDPScraper:
             print(f"📊 Bangladesh notices: {len(bangladesh_notices)}")
 
             if not notices:
-                return self.get_sample_data()
+                return []
 
             return notices
 
         except Exception as e:
             print(f"❌ Error scraping UNDP: {e}")
-            return self.get_sample_data()
+            return []
 
     def get_sample_data(self):
         """Return sample UNDP data"""
-        return [
-                {
-                    "id": 1,
-                    "title": "Hiring National Consultant: Programme Support",
-                    "ref_no": "UNDP-BGD-01079",
-                    "country": "UNDP-BGD/BANGLADESH",
-                    "process_type": "IC - Individual contractor",
-                    "deadline": "14-Feb-26 05:30 AM (New York time)",
-                    "posted_date": "01-Feb-26",
-                    "source": "undp"
-                    },
-                {
-                    "id": 2,
-                    "title": "National Consultant - Design of ProDoc for HPMP III and KIP I Preparation",
-                    "ref_no": "UNDP-BGD-01078",
-                    "country": "UNDP-BGD/BANGLADESH",
-                    "process_type": "IC - Individual contractor",
-                    "deadline": "15-Feb-26 05:30 AM (New York time)",
-                    "posted_date": "01-Feb-26",
-                    "source": "undp"
-                    },
-                {
-                    "id": 3,
-                    "title": "National Consultant for Final Evaluation (FE) of UNDP-supported GCA Project",
-                    "ref_no": "UNDP-BGD-01077",
-                    "country": "UNDP-BGD/BANGLADESH",
-                    "process_type": "IC - Individual contractor",
-                    "deadline": "15-Feb-26 05:30 AM (New York time)",
-                    "posted_date": "01-Feb-26",
-                    "source": "undp"
-                    },
-                {
-                    "id": 4,
-                    "title": "Contracting firm for event management services under LTA with UNDP Bangladesh",
-                    "ref_no": "UNDP-BGD-01081",
-                    "country": "UNDP-BGD/BANGLADESH",
-                    "process_type": "ITB - Invitation to bid",
-                    "deadline": "03-Mar-26 05:30 AM (New York time)",
-                    "posted_date": "10-Feb-26",
-                    "source": "undp"
-                    },
-                {
-                    "id": 5,
-                    "title": "Redesign, Management, and Maintenance of the NGOAB Online System",
-                    "ref_no": "UNDP-BGD-01076",
-                    "country": "UNDP-BGD/BANGLADESH",
-                    "process_type": "RFP - Request for proposal",
-                    "deadline": "25-Feb-26 05:30 AM (New York time)",
-                    "posted_date": "03-Feb-26",
-                    "source": "undp"
-                    }
-        ]
+        return []
 
     def filter_by_country(self, notices, country="Bangladesh"):
         """Filter notices by country"""
