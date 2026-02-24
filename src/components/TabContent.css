@@ -80,3 +80,19 @@
     grid-template-columns: 1fr;
   }
 }
+
+.no-tenders {
+  text-align: center;
+  padding: 50px;
+  background: #1a1a2e;
+  border-radius: 10px;
+  color: #888;
+  font-family: 'Fira Code', 'Fira Mono', monospace;
+  border: 1px dashed #333;
+}
+
+.tenders-list {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}

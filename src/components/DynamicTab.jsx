@@ -6,19 +6,9 @@ const DynamicTab = ({ scraperName, displayName, data = [] }) => {
 
   return (
     <div className="tab-content">
-    <div className="tab-header" style={{
-      display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: '20px'
-    }}>
+    <div className="tab-header">
     <h2>{displayName} Tenders</h2>
-    <span className="tender-count" style={{
-      background: '#667eea',
-        color: '#fff',
-        padding: '5px 10px',
-        borderRadius: '5px'
-    }}>
+    <span className="tender-count">
     {data.length} tenders found
     </span>
     </div>
@@ -29,13 +19,7 @@ const DynamicTab = ({ scraperName, displayName, data = [] }) => {
         <TenderCard key={tender.id || index} tender={tender} />
       ))
     ) : (
-      <div className="no-tenders" style={{
-        textAlign: 'center',
-          padding: '50px',
-          background: '#1a1a2e',
-          borderRadius: '10px',
-          color: '#888'
-      }}>
+      <div className="no-tenders">
       📭 No tenders found for {displayName}
       </div>
     )}

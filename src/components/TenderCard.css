@@ -1,102 +1,142 @@
 .tender-card {
+  background: #1a1a2e;
+  border-radius: 10px;
+  padding: 20px;
+  margin-bottom: 15px;
+  border: 1px solid #333;
+  color: #fff;
   transition: transform 0.2s, box-shadow 0.2s;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
   font-family: 'Fira Code', 'Fira Mono', monospace;
 }
 
 .tender-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(25, 23, 36, 0.5); /* Base shadow */
+  box-shadow: 0 8px 20px rgba(25, 23, 36, 0.5);
 }
 
-/* Source-specific hover effects with Rosé Pine colors */
-.tender-card.source-bdjobs:hover {
-  border-color: #31748f !important; /* Pine */
-}
+/* Source-specific hover effects */
+.tender-card.source-bdjobs:hover { border-color: #31748f !important; }
+.tender-card.source-undp:hover { border-color: #eb6f92 !important; }
+.tender-card.source-worldbank:hover { border-color: #f6c177 !important; }
+.tender-card.source-pksf:hover { border-color: #c4a7e7 !important; }
+.tender-card.source-care:hover { border-color: #ebbcba !important; }
+.tender-card.source-ungm:hover { border-color: #31748f !important; }
+.tender-card.source-bppa:hover { border-color: #8B4513 !important; }
+.tender-card.source-adb:hover { border-color: #1565C0 !important; }
 
-.tender-card.source-undp:hover {
-  border-color: #eb6f92 !important; /* Love/Red */
-}
-
-.tender-card.source-worldbank:hover {
-  border-color: #f6c177 !important; /* Gold */
-}
-
-.tender-card.source-pksf:hover {
-  border-color: #c4a7e7 !important; /* Iris/Purple */
-}
-
-.tender-card.source-care:hover {
-  border-color: #ebbcba !important; /* Rose */
-}
-
-.tender-card.source-ungm:hover {
-  border-color: #31748f !important; /* Pine */
-}
-
-/* Badge styles with Rosé Pine colors */
-.badge-status-active { background: #31748f; } /* Pine */
-.badge-status-pipeline { background: #f6c177; } /* Gold */
-.badge-status-closed { background: #eb6f92; } /* Love/Red */
-.badge-status-dropped { background: #6e6a86; } /* Muted */
-.badge-process { background: #c4a7e7; } /* Iris */
-.badge-ref { background: #908caa; } /* Muted text */
-.badge-amount { background: #31748f; } /* Pine */
-.badge-stage { background: #c4a7e7; } /* Iris */
-.badge-views { background: #6e6a86; } /* Muted darker */
-.badge-likes { background: #eb6f92; } /* Love/Red */
-.badge-download { background: #31748f; } /* Pine */
-.badge-opportunity { background: #ebbcba; } /* Rose */
-.badge-remaining { background: #eb6f92; } /* Love/Red */
-.badge-country { background: #c4a7e7; } /* Iris */
-.badge-author { background: #908caa; } /* Muted text */
-.badge-link {
-  background: #31748f; /* Pine */
-  cursor: pointer;
-  text-decoration: underline;
-  color: #e0def4; /* Soft text */
-  font-family: 'Fira Code', 'Fira Mono', monospace;
-}
-
-.badge-link:hover {
-  background: #c4a7e7; /* Iris */
-  color: #191724; /* Base */
-}
-
-/* Badge text color for better contrast */
-.badge-status-active,
-.badge-status-pipeline,
-.badge-status-closed,
-.badge-status-dropped,
-.badge-process,
-.badge-ref,
-.badge-amount,
-.badge-stage,
-.badge-views,
-.badge-likes,
-.badge-download,
-.badge-opportunity,
-.badge-remaining,
-.badge-country,
-.badge-author,
-.badge-link {
-  color: #e0def4; /* Soft text */
-  font-family: 'Fira Code', 'Fira Mono', monospace;
-  padding: 4px 8px;
-  border-radius: 4px;
+.source-indicator {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  color: #fff;
+  padding: 4px 12px;
+  border-radius: 15px;
   font-size: 12px;
-  font-weight: 500;
+  font-weight: bold;
+  text-transform: uppercase;
+  z-index: 1;
 }
 
-/* Responsive design */
+.source-indicator.bdjobs { background: #2E7D32; }
+.source-indicator.undp { background: #1E88E5; }
+.source-indicator.worldbank { background: #F9A825; }
+.source-indicator.pksf { background: #6A1B9A; }
+.source-indicator.care { background: #C2185B; }
+.source-indicator.ungm { background: #00796B; }
+.source-indicator.adb { background: #1565C0; }
+.source-indicator.bppa { background: #8B4513; }
+
+.tender-title {
+  margin: 0 0 10px 0;
+  font-size: 18px;
+  font-weight: 600;
+  padding-right: 80px;
+  line-height: 1.4;
+  color: #fff;
+}
+
+.tender-organization {
+  margin: 0 0 8px 0;
+  font-size: 14px;
+  color: #aaa;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.tender-date {
+  margin: 0 0 15px 0;
+  font-size: 13px;
+  color: #888;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.badges-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+  border-top: 1px solid #333;
+  padding-top: 15px;
+}
+
+.badge {
+  color: #fff;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 500;
+  cursor: default;
+}
+
+.badge.link {
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.badge.status-active { background: #2E7D32; }
+.badge.status-pipeline { background: #F9A825; }
+.badge.status-closed { background: #C62828; }
+.badge.status-dropped { background: #6A1B9A; }
+.badge.process { background: #1E88E5; }
+.badge.ref { background: #546E7A; }
+.badge.amount { background: #2E7D32; }
+.badge.stage { background: #6A1B9A; }
+.badge.views { background: #424242; }
+.badge.likes { background: #C2185B; }
+.badge.default { background: #333; }
+
+.tender-details {
+  margin-top: 10px;
+  font-size: 12px;
+  color: #aaa;
+}
+
+.tender-details.bordered {
+  border-top: 1px solid #333;
+  padding-top: 10px;
+}
+
+.click-hint {
+  text-align: right;
+  margin-top: 10px;
+  font-size: 11px;
+  color: #666;
+}
+
 @media (max-width: 768px) {
   .tender-card {
     padding: 15px !important;
   }
-
-  .tender-card h3 {
+  
+  .tender-title {
     font-size: 16px !important;
     padding-right: 60px !important;
-    color: #ebbcba; /* Rose */
-    font-family: 'Fira Code', 'Fira Mono', monospace;
+    color: #ebbcba;
   }
 }
