@@ -9,7 +9,14 @@ backend/*.pyc
 backend/.python-version
 backend/env/
 backend/.env
-
+# Python cache files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+backend/__pycache__/
+backend/*.pyc
 # Environment files
 .env
 .env.local
