@@ -572,16 +572,6 @@ const DataExportPage = ({ onClose }) => {
       </div>
     )}
     </div>
-
-    {/* Data Folder Info */}
-    <div className="data-folder-info">
-    <FiFolder className="folder-icon" />
-    <span>
-    <strong>Data Tracking:</strong> All downloads are tracked locally.
-    Downloaded files should be saved to your <code className="folder-code">./data/</code> folder for organization.
-    Download history is stored in your browser's localStorage.
-    </span>
-    </div>
     </div>
     </div>
   );
