@@ -1,76 +1,75 @@
 import requests
 from bs4 import BeautifulSoup
 from datetime import datetime
+from urllib.parse import urljoin
 from . import register_scraper
-@register_scraper('pksf', display_name='PKSF')
 
+
+@register_scraper('pksf', display_name='PKSF')
 class PKSFScraper:
+
     def __init__(self):
-        self.url = "https://pksf.org.bd/category/tender/"
+        self.url = "https://pksf.org.bd/tender/"
         self.headers = {
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
-                }
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
+        }
 
     def scrape(self):
-        """Scrape PKSF tenders"""
+        """Scrape PKSF tender table"""
         try:
-            print("🔍 Scraping PKSF...")
+            print("🔍 Scraping PKSF tenders...")
+
             res = requests.get(self.url, headers=self.headers, timeout=30)
             res.raise_for_status()
 
-            soup = BeautifulSoup(res.text, "html.parser")  # Changed to html.parser
+            soup = BeautifulSoup(res.text, "html.parser")
 
-            main = soup.select_one("#main-content") or soup.select_one(".content-area") or soup.select_one("main")
-            if not main:
-                print("⚠️ Main content not found, using sample data")
+            table = soup.select_one(".tender-table")
+
+            if not table:
+                print("⚠️ Tender table not found")
                 return []
 
-            posts = main.select(".wgl_col-4.item") or main.select(".post") or main.select(".tender-item") or main.select("article")
+            rows = table.select("tbody tr")
 
             results = []
 
-            for i, post in enumerate(posts[:10]):  # Limit to 10 items
+            for row in rows:
                 try:
-                    # Date
-                    date_tag = post.select_one(".post_date") or post.select_one(".date") or post.select_one(".published")
-                    date = date_tag.get_text(strip=True) if date_tag else datetime.now().strftime("%d %b %Y")
+                    cols = row.find_all("td")
 
-                    # Title + link
-                    title_tag = post.select_one("h3.blog-post_title a") or post.select_one("h2 a") or post.select_one("h3 a") or post.select_one(".entry-title a") or post.select_one("a")
-                    title = title_tag.get_text(strip=True) if title_tag else f"Tender {i+1}"
-                    link = title_tag["href"] if title_tag and title_tag.get("href") else "#"
+                    if len(cols) < 6:
+                        continue
 
-                    # Views
-                    views_tag = post.select_one(".post_views .described") or post.select_one(".views") or post.select_one(".view-count")
-                    views = views_tag.get_text(strip=True) if views_tag else str(100 + i)
+                    sl = cols[0].get_text(strip=True)
+                    ref = cols[1].get_text(strip=True)
 
-                    # Likes
-                    likes_tag = post.select_one(".sl-count") or post.select_one(".likes") or post.select_one(".like-count")
-                    likes = likes_tag.get_text(strip=True) if likes_tag else str(10 + i)
+                    title_tag = cols[2].select_one("strong")
+                    title = title_tag.get_text(strip=True) if title_tag else cols[2].get_text(strip=True)
 
-                    # Author
-                    author_tag = post.select_one(".post_author a") or post.select_one(".author a") or post.select_one(".byline a")
-                    author = author_tag.get_text(strip=True) if author_tag else "PKSF"
+                    pub_date = cols[3].get_text(strip=True)
+                    closing_date = cols[4].get_text(strip=True)
+
+                    link_tag = cols[5].select_one("a")
+                    link = link_tag["href"] if link_tag else "#"
 
                     results.append({
-                        "id": len(results) + 1,
-                        "date": date,
+                        "id": int(sl),
+                        "ref_no": ref,
                         "title": title,
+                        "publication_date": pub_date,
+                        "deadline": closing_date,
                         "link": link,
-                        "views": views,
-                        "likes": likes,
-                        "author": author,
                         "source": "pksf",
                         "scraped_at": datetime.now().isoformat()
-                        })
+                    })
+
                 except Exception as e:
-                    print(f"Error parsing PKSF card: {e}")
+                    print(f"⚠️ Error parsing row: {e}")
                     continue
 
-            if not results:
-                return []
-
             print(f"✅ Scraped {len(results)} tenders from PKSF")
+
             return results
 
         except Exception as e:
@@ -78,10 +77,13 @@ class PKSFScraper:
             return []
 
     def get_sample_data(self):
-        """Return sample data if scraping fails"""
         return []
 
+
+# Standalone test
 if __name__ == "__main__":
     scraper = PKSFScraper()
-    results = scraper.scrape()
-    print(f"Total tenders scraped: {len(results)}")
+    data = scraper.scrape()
+
+    for d in data:
+        print(d)
