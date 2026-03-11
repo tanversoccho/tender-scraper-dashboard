@@ -1,88 +1,249 @@
-from . import register_scraper
-from selenium import webdriver
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.chrome.options import Options
+# backend/scrapers/worldbank.py
 import time
 from datetime import datetime
+from urllib.parse import urljoin
+import re
+from . import register_scraper
 
-@register_scraper('worldbank', display_name='World Bank')
+# Try to import selenium, handle gracefully if not installed
+try:
+    from selenium import webdriver
+    from selenium.webdriver.common.by import By
+    from selenium.webdriver.support.ui import WebDriverWait
+    from selenium.webdriver.support import expected_conditions as EC
+    from selenium.webdriver.chrome.options import Options
+    from selenium.webdriver.chrome.service import Service
+    from webdriver_manager.chrome import ChromeDriverManager
+    SELENIUM_AVAILABLE = True
+except ImportError:
+    SELENIUM_AVAILABLE = False
+    print("⚠️ Selenium not installed. Install with: pip install selenium webdriver-manager")
+
+@register_scraper('worldbank', display_name='World Bank RFx Now')
 class WorldBankScraper:
-    def __init__(self):
-        self.url = "https://projects.worldbank.org/en/projects-operations/projects-list?os=0&countryshortname_exact=Bangladesh"
+    def __init__(self, use_selenium=True):
+        self.base_url = "https://wbgeprocure-rfxnow.worldbank.org"
+        self.url = f"{self.base_url}/rfxnow/public/advertisement/index.html"
+        self.use_selenium = use_selenium and SELENIUM_AVAILABLE
+        self.driver = None
 
-    def scrape(self):
-        """Scrape World Bank projects"""
-        print("🔍 Scraping World Bank projects...")
+    def _setup_driver(self):
+        """Setup Chrome driver with options"""
+        chrome_options = Options()
+        chrome_options.add_argument('--headless')  # Run in background
+        chrome_options.add_argument('--no-sandbox')
+        chrome_options.add_argument('--disable-dev-shm-usage')
+        chrome_options.add_argument('--disable-gpu')
+        chrome_options.add_argument('--window-size=1920,1080')
+        chrome_options.add_argument('--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36')
 
         try:
-            # Setup Chrome options
-            chrome_options = Options()
-            chrome_options.add_argument("--headless")  # Run in background
-            chrome_options.add_argument("--no-sandbox")
-            chrome_options.add_argument("--disable-dev-shm-usage")
-            chrome_options.add_argument("--window-size=1920,1080")
-            chrome_options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36")
-
-            # Initialize driver
-            driver = webdriver.Chrome(options=chrome_options)
-            driver.get(self.url)
-
-            # Wait for table to load
-            wait = WebDriverWait(driver, 10)
-            table = wait.until(
-                    EC.presence_of_element_located((By.CSS_SELECTOR, "table.project-operation-tab-table"))
-                    )
-
-            # Wait a bit more for data
-            time.sleep(2)
-
-            # Find all rows
-            rows = driver.find_elements(By.CSS_SELECTOR, "tbody tr")
-            print(f"Found {len(rows)} project rows")
-
-            # Extract data
-            projects = []
-            for i, row in enumerate(rows[:20]):  # Limit to 20 projects
-                try:
-                    cells = row.find_elements(By.TAG_NAME, "td")
-
-                    if len(cells) >= 8:
-                        title_elem = cells[0].find_element(By.TAG_NAME, "a") if cells[0].find_elements(By.TAG_NAME, "a") else cells[0]
-
-                        project = {
-                                'id': len(projects) + 1,
-                                'title': title_elem.text.strip(),
-                                'country': cells[1].text.strip(),
-                                'project_id': cells[2].text.strip(),
-                                'amount': cells[3].text.strip(),
-                                'status': cells[4].text.strip(),
-                                'approval_date': cells[5].text.strip(),
-                                'last_updated': cells[6].text.strip(),
-                                'last_stage': cells[7].text.strip(),
-                                'source': 'worldbank',
-                                'scraped_at': datetime.now().isoformat()
-                                }
-
-                        projects.append(project)
-                        print(f"  ✅ Added: {project['title'][:50]}...")
-
-                except Exception as e:
-                    print(f"  ❌ Error parsing row: {e}")
-                    continue
-
-            driver.quit()
-
-            if not projects:
-                return []
-
-            return projects
-
+            service = Service(ChromeDriverManager().install())
+            self.driver = webdriver.Chrome(service=service, options=chrome_options)
+            return True
         except Exception as e:
-            print(f"❌ Error scraping World Bank: {e}")
+            print(f"❌ Failed to setup Chrome driver: {e}")
+            return False
+
+    def _scrape_with_selenium(self):
+        """Scrape using Selenium to handle JavaScript-rendered content"""
+        if not self._setup_driver():
             return []
 
-    def get_sample_data(self):
-        """Return sample World Bank data"""
-        return []
+        try:
+            print("🔍 Loading World Bank page with Selenium...")
+            self.driver.get(self.url)
+
+            # Wait for table to load
+            wait = WebDriverWait(self.driver, 10)
+            wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "table.table-condensed tbody tr")))
+
+            # Give extra time for all data to load
+            time.sleep(2)
+
+            # Get page source after JavaScript execution
+            html = self.driver.page_source
+            return self._parse_html(html)
+
+        except Exception as e:
+            print(f"❌ Selenium scraping error: {e}")
+            return []
+        finally:
+            if self.driver:
+                self.driver.quit()
+
+    def _scrape_with_requests(self):
+        """Fallback method using requests (might get empty data)"""
+        import requests
+        from bs4 import BeautifulSoup
+
+        try:
+            print("⚠️ Using requests fallback (may not get JavaScript-rendered content)...")
+            headers = {
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+                    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+                    'Accept-Language': 'en-US,en;q=0.5',
+                    }
+
+            response = requests.get(self.url, headers=headers, timeout=30)
+            response.raise_for_status()
+            return self._parse_html(response.text)
+
+        except Exception as e:
+            print(f"❌ Requests fallback error: {e}")
+            return []
+
+    def _parse_html(self, html):
+        """Parse HTML and extract tender data"""
+        from bs4 import BeautifulSoup
+
+        soup = BeautifulSoup(html, 'html.parser')
+
+        # Find the advertisements table
+        table = soup.select_one('table.table-condensed')
+        if not table:
+            print("⚠️ Advertisements table not found")
+            return []
+
+        # Get table body
+        tbody = table.find('tbody')
+        if not tbody:
+            print("⚠️ Table body not found")
+            return []
+
+        rows = tbody.find_all('tr')
+        print(f"Found {len(rows)} advertisements")
+
+        # If no rows found, page might still be loading
+        if len(rows) == 0:
+            print("⚠️ No rows found - page might need more time to load")
+            return []
+
+        tenders = []
+
+        for row in rows:
+            try:
+                cells = row.find_all('td')
+                if len(cells) >= 4:
+                    # Extract procurement number
+                    procurement_number = cells[0].get_text(strip=True)
+
+                    # Extract title and detail URL
+                    title_cell = cells[1]
+                    link_tag = title_cell.find('a')
+
+                    if link_tag:
+                        title = link_tag.get_text(strip=True)
+                        detail_url = urljoin(self.base_url, link_tag.get('href', ''))
+                    else:
+                        title = title_cell.get_text(strip=True)
+                        detail_url = ""
+
+                    # Extract publication date
+                    pub_date_raw = cells[2].get_text(strip=True)
+                    publication_date = self._clean_date(pub_date_raw)
+
+                    # Extract EOI deadline
+                    deadline_raw = cells[3].get_text(strip=True)
+                    eoi_deadline = self._clean_date(deadline_raw)
+
+                    # Extract organization/country from title
+                    organization = "World Bank"
+                    country = self._extract_country(title)
+
+                    tender = {
+                            'id': len(tenders) + 1,
+                            'procurement_number': procurement_number,
+                            'title': title,
+                            'organization': organization,
+                            'country': country,
+                            'publication_date': publication_date,
+                            'deadline': eoi_deadline,
+                            'detail_url': detail_url,
+                            'source': 'worldbank',
+                            'scraped_at': datetime.now().isoformat()
+                            }
+
+                    tenders.append(tender)
+                    print(f"  ✅ Added: {title[:50]}...")
+
+            except Exception as e:
+                print(f"  ❌ Error parsing row: {e}")
+                continue
+
+        return tenders
+
+    def _clean_date(self, date_str):
+        """Clean the date string by removing encoded parameters"""
+        if not date_str:
+            return None
+
+        # Split on semicolon and take the first part (date)
+        parts = date_str.split(';')
+        date_part = parts[0]
+
+        # If there's a second part with time, extract and combine
+        if len(parts) > 1:
+            # Extract time from the encoded part using regex
+            time_match = re.search(r'(\d{1,2}:\d{2}\s[AP]M\s\w+)', date_str)
+            if time_match:
+                return f"{date_part} {time_match.group(0)}"
+
+        return date_part
+
+    def _extract_country(self, title):
+        """Extract country/organization from title"""
+        country_keywords = {
+                'India': ['India', 'Odisha', 'Telangana', 'Karnataka', 'Delhi', 'Mumbai'],
+                'Azerbaijan': ['Azerbaijan', 'Baku'],
+                'Jamaica': ['Jamaica', 'Kingston'],
+                'Central Asia': ['Central Asia', 'Kazakhstan', 'Uzbekistan', 'Turkmenistan', 'Kyrgyz', 'Tajik'],
+                'Africa': ['Africa', 'Kenya', 'Nigeria', 'Ghana', 'Ethiopia', 'Tanzania'],
+                'Southeast Asia': ['Vietnam', 'Thailand', 'Indonesia', 'Philippines', 'Cambodia', 'Laos'],
+                'Eastern Europe': ['Ukraine', 'Moldova', 'Georgia', 'Armenia'],
+                'Middle East': ['Jordan', 'Lebanon', 'Iraq', 'Yemen', 'West Bank', 'Gaza']
+                }
+
+        for country, keywords in country_keywords.items():
+            for keyword in keywords:
+                if keyword.lower() in title.lower():
+                    return country
+
+        # Try to find any capitalized place name (simple heuristic)
+        place_pattern = r'\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+)*\b'
+        potential_places = re.findall(place_pattern, title)
+
+        # Filter out common non-country words
+        skip_words = ['For', 'The', 'And', 'Of', 'In', 'To', 'With', 'From', 'At', 'A', 'An',
+                      'Consultant', 'Consultancy', 'Services', 'Project', 'Program', 'Study',
+                      'Support', 'Development', 'Technical', 'Financial', 'Management']
+
+        for place in potential_places:
+            if place not in skip_words and len(place) > 3:
+                return place
+
+        return None
+
+    def scrape(self):
+        """Main scrape method - tries Selenium first, falls back to requests"""
+        if self.use_selenium:
+            data = self._scrape_with_selenium()
+            if data and len(data) > 0:
+                print(f"✅ Successfully scraped {len(data)} tenders with Selenium")
+                return data
+            else:
+                print("⚠️ Selenium returned no data, trying requests fallback...")
+
+        # Fallback to requests
+        data = self._scrape_with_requests()
+        if data and len(data) > 0:
+            print(f"✅ Successfully scraped {len(data)} tenders with requests")
+        else:
+            print("⚠️ Both methods returned no data")
+            # Return sample data for testing
+            data = self.get_sample_data()
+            print(f"📋 Using {len(data)} sample items for testing")
+
+        return data
+
+    # ... rest of your methods (filter_by_country, get_active_deadlines, etc.) ...
