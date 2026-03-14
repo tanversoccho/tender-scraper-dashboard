@@ -2,7 +2,6 @@ import sys
 import io
 import importlib
 import os
-import inspect
 
 # Fix console encoding for Windows
 if sys.platform == 'win32':
@@ -11,6 +10,7 @@ if sys.platform == 'win32':
 
 # Scraper registry
 SCRAPERS = {}
+
 
 def register_scraper(name, display_name=None):
     """Decorator to register a scraper"""
@@ -22,6 +22,7 @@ def register_scraper(name, display_name=None):
                 }
         return scraper_class
     return decorator
+
 
 def discover_scrapers():
     """Automatically discover and import all scraper modules"""
@@ -37,11 +38,13 @@ def discover_scrapers():
 
     return SCRAPERS
 
+
 def get_scraper(name):
     """Get scraper class by name"""
     if name in SCRAPERS:
         return SCRAPERS[name]['class']
     return None
+
 
 def get_all_scrapers():
     """Get all registered scrapers with metadata"""
@@ -49,6 +52,7 @@ def get_all_scrapers():
         'display_name': info['display_name'],
         'name': name
         } for name, info in SCRAPERS.items()}
+
 
 # Auto-discover scrapers when module is imported
 discover_scrapers()

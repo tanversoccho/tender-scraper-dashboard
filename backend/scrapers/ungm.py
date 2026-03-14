@@ -5,8 +5,8 @@ import requests
 from bs4 import BeautifulSoup
 import re
 
-@register_scraper('ungm', display_name='UNGM/UNOPS')
 
+@register_scraper('ungm', display_name='UNGM/UNOPS')
 class UNGMScraper:
     def __init__(self):
         self.base_url = "https://www.ungm.org"
@@ -61,7 +61,7 @@ class UNGMScraper:
                     organization = agency_cell.text.strip() if agency_cell else "UNOPS"
 
                     # Extract opportunity type
-                    type_cell = row.find_all('div', class_='tableCell')[5]  # Index based on structure
+                    type_cell = row.find_all('div', class_='tableCell')[5]
                     opp_type = type_cell.text.strip() if type_cell else "N/A"
 
                     # Extract reference
@@ -155,13 +155,14 @@ class UNGMScraper:
         print(f"✅ Saved {len(df)} notices to {filename}")
         return df
 
+
 # For testing
 if __name__ == "__main__":
     scraper = UNGMScraper()
     notices = scraper.scrape()
 
     if notices:
-        print(f"\n📋 Sample notices (first 5):")
+        print("\n📋 Sample notices (first 5):")
         for i, n in enumerate(notices[:5]):
             print(f"{i+1}. {n['title'][:50]}...")
             print(f"   Ref: {n['reference']}, Type: {n['opportunity_type']}")

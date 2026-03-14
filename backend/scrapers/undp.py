@@ -5,8 +5,8 @@ import requests
 from bs4 import BeautifulSoup
 import re
 
-@register_scraper('undp', display_name='UNDP')
 
+@register_scraper('undp', display_name='UNDP')
 class UNDPScraper:
     # Your existing UNDP scraper code...class UNDPScraper:
     def __init__(self):
@@ -144,6 +144,7 @@ class UNDPScraper:
         print(f"✅ Saved {len(df)} notices to {filename}")
         return df
 
+
 # For testing
 if __name__ == "__main__":
     scraper = UNDPScraper()
@@ -151,7 +152,7 @@ if __name__ == "__main__":
 
     if notices:
         # Show all notices
-        print(f"\n📋 Sample notices (first 5):")
+        print("\n📋 Sample notices (first 5):")
         for i, n in enumerate(notices[:5]):
             print(f"{i+1}. {n['title'][:50]}...")
             print(f"   Ref: {n['ref_no']}, Country: {n['country']}")

@@ -19,6 +19,7 @@ except ImportError:
     SELENIUM_AVAILABLE = False
     print("⚠️ Selenium not installed. Install with: pip install selenium webdriver-manager")
 
+
 @register_scraper('worldbank', display_name='World Bank RFx Now')
 class WorldBankScraper:
     def __init__(self, use_selenium=True):
@@ -75,7 +76,7 @@ class WorldBankScraper:
     def _scrape_with_requests(self):
         """Fallback method using requests (might get empty data)"""
         import requests
-        from bs4 import BeautifulSoup
+        # from bs4 import BeautifulSoup
 
         try:
             print("⚠️ Using requests fallback (may not get JavaScript-rendered content)...")

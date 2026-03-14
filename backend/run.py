@@ -10,7 +10,9 @@ import subprocess
 import webbrowser
 from time import sleep
 
+
 def main():
+
     print("=" * 60)
     print("📊 Tender Scraper Dashboard - Backend Server")
     print("=" * 60)
@@ -43,6 +45,7 @@ def main():
     os.environ['FLASK_APP'] = 'app.py'
     os.environ['FLASK_ENV'] = 'development'
     subprocess.run([python_path, 'app.py'])
+
 
 if __name__ == '__main__':
     main()

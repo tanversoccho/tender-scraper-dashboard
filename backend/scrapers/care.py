@@ -2,8 +2,9 @@ import requests
 from bs4 import BeautifulSoup
 from datetime import datetime
 from . import register_scraper
-@register_scraper('care', display_name='Care')
 
+
+@register_scraper('care', display_name='Care')
 class CareScraper:
     def __init__(self):
         self.url = "https://www.carebangladesh.org/consultancy"
@@ -32,7 +33,7 @@ class CareScraper:
             # Try different card selectors
             cards = project_tab.select("div.col-md-3") or project_tab.select(".card") or project_tab.select(".item")
 
-            for i, card in enumerate(cards[:10]):  # Limit to 10 items
+            for i, card in enumerate(cards):  # Limit to 10 items
                 try:
                     # Deadline
                     deadline_tag = card.select_one("p i") or card.select_one(".deadline") or card.select_one(".date")
@@ -77,6 +78,7 @@ class CareScraper:
     def get_sample_data(self):
         """Return sample data if scraping fails"""
         return []
+
 
 if __name__ == "__main__":
     scraper = CareScraper()

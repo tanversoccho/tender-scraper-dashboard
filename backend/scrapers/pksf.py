@@ -1,7 +1,6 @@
 import requests
 from bs4 import BeautifulSoup
 from datetime import datetime
-from urllib.parse import urljoin
 from . import register_scraper
 
 

@@ -1,7 +1,8 @@
 from bs4 import BeautifulSoup
 from datetime import datetime
-import cloudscraper
 from urllib.parse import urljoin
+import cloudscraper
+
 
 class ADBScraper:
     def __init__(self):
@@ -31,7 +32,7 @@ class ADBScraper:
 
             projects = []
 
-            for i, div in enumerate(project_divs[:10]):  # Limit to 10
+            for i, div in enumerate(project_divs):
                 try:
                     # Title
                     title_elem = div.select_one('.item-title a')
@@ -99,6 +100,7 @@ class ADBScraper:
     def get_sample_data(self):
         """Return sample data if scraping fails"""
         return []
+
 
 # For direct testing
 if __name__ == "__main__":

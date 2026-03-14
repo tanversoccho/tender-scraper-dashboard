@@ -1,16 +1,15 @@
+from datetime import datetime
 from flask import Flask, jsonify, request
 from flask_cors import CORS
-import json
+from scrapers import get_all_scrapers, get_scraper, discover_scrapers
 import os
 import sys
-from datetime import datetime
 import traceback
 
 # Add scrapers to path
 sys.path.append(os.path.join(os.path.dirname(__file__), 'scrapers'))
 
 # Import the scraper registry
-from scrapers import get_all_scrapers, get_scraper, discover_scrapers
 
 app = Flask(__name__)
 CORS(app)  # Enable CORS for all routes
@@ -20,6 +19,7 @@ scrapers = discover_scrapers()
 
 # Store last scraped data - dynamic cache
 cache = {}
+
 
 @app.route('/')
 def index():
@@ -61,10 +61,12 @@ def index():
         'timestamp': datetime.now().isoformat()
         })
 
+
 @app.route('/api/scrapers', methods=['GET'])
 def list_scrapers():
     """List all available scrapers"""
     return jsonify(get_all_scrapers())
+
 
 @app.route('/api/health', methods=['GET'])
 def health_check():
@@ -75,6 +77,7 @@ def health_check():
         'message': 'Tender Scraper API is running',
         'scrapers_loaded': len(scrapers)
         })
+
 
 @app.route('/api/scrape/all', methods=['GET'])
 def scrape_all():
@@ -98,6 +101,7 @@ def scrape_all():
             'error': str(e),
             'traceback': traceback.format_exc()
             }), 500
+
 
 @app.route('/api/scrape/<source>', methods=['GET'])
 def scrape_source(source):
@@ -128,6 +132,7 @@ def scrape_source(source):
             'traceback': traceback.format_exc()
             }), 500
 
+
 @app.route('/api/data/<source>', methods=['GET'])
 def get_cached_data(source):
     """Get cached data without scraping"""
@@ -149,6 +154,7 @@ def get_cached_data(source):
         'timestamp': cache[source]['timestamp'],
         'source': source
         })
+
 
 @app.route('/api/stats', methods=['GET'])
 def get_stats():
@@ -177,6 +183,7 @@ def get_stats():
         'stats': stats,
         'timestamp': datetime.now().isoformat()
         })
+
 
 def run_scraper(source, force_refresh=False):
     """Run specific scraper with caching"""
@@ -210,6 +217,7 @@ def run_scraper(source, force_refresh=False):
     print(f"Scraped {len(data)} items from {source}")
     return data
 
+
 @app.route('/api/export/json', methods=['GET'])
 def export_json():
     """Export all data as JSON"""
@@ -233,6 +241,7 @@ def export_json():
             'success': False,
             'error': str(e)
             }), 500
+
 
 @app.route('/api/export/csv', methods=['GET'])
 def export_csv():
@@ -284,6 +293,7 @@ def export_csv():
             'success': False,
             'error': str(e)
             }), 500
+
 
 if __name__ == '__main__':
     print("=" * 60)

@@ -14,7 +14,7 @@
   },
  "scripts": {
     "start": "react-scripts start",
-    "start:backend": "cd backend && set FLASK_DEBUG=0 && set PYTHONIOENCODING=utf-8 && .\\venv\\Scripts\\python app.py",
+    "start:backend": "cd backend && set FLASK_DEBUG=0 && set PYTHONIOENCODING=utf-8 && .\\venv\\Scripts\\python run.py",
     "dev": "concurrently \"npm run start:backend\" \"npm start\"",
     "build": "react-scripts build",
     "build-only": "react-scripts build",

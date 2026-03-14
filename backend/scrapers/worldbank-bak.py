@@ -7,6 +7,7 @@ from selenium.webdriver.chrome.options import Options
 import time
 from datetime import datetime
 
+
 @register_scraper('worldbank', display_name='World Bank')
 class WorldBankScraper:
     def __init__(self):
