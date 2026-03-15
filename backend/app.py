@@ -5,7 +5,14 @@ from scrapers import get_all_scrapers, get_scraper, discover_scrapers
 import os
 import sys
 import traceback
+from dotenv import load_dotenv  # Add this import
 
+# Load environment variables from .env file
+load_dotenv()  # This looks for .env in the current directory or parent
+
+# Now you can access environment variables
+UNGM_USERNAME = os.getenv('UNGM_USERNAME')
+UNGM_PASSWORD = os.getenv('UNGM_PASSWORD')
 # Add scrapers to path
 sys.path.append(os.path.join(os.path.dirname(__file__), 'scrapers'))
 
