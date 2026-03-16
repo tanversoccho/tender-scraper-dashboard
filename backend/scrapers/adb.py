@@ -2,8 +2,8 @@ import cloudscraper
 from bs4 import BeautifulSoup
 from datetime import datetime
 from urllib.parse import urljoin
-import time
-import random
+# import time
+# import random
 from . import register_scraper  # Add this import
 
 
@@ -21,7 +21,7 @@ class ADBScraper:
                     'desktop': True,
                     'mobile': False
                     },
-                delay=15,  # Explicit delay for Cloudflare challenges [citation:4]
+                delay=15,
                 interpreter='js2py'  # or 'nodejs' if you have Node installed
                 )
 

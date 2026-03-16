@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import {
   FiDownload, FiFilter, FiRefreshCw,
   FiFileText, FiDatabase, FiClock, FiCheckCircle,
-  FiSearch, FiDownloadCloud, FiFolder,
+  FiSearch, FiDownloadCloud,
   FiEye, FiTable, FiGrid, FiAlertCircle, FiAward,
   FiStar, FiTrendingUp
 } from 'react-icons/fi';
@@ -24,11 +24,10 @@ const DataExportPage = ({ onClose }) => {
   const [previewType, setPreviewType] = useState('table');
   const [activeTab, setActiveTab] = useState('all'); // 'all' or 'tor'
 
-  // ToR-specific filters
   const [torFilters, setTorFilters] = useState({
-    documentType: 'all', // ToR, RFP, EOI, RFQ, all
+    documentType: 'all',
     showOnlyNew: false,
-    showTorOnly: true, // Default to showing only ToR-relevant
+    showTorOnly: true,
     minKeywords: 1,
     selectedKeywords: []
   });
@@ -39,7 +38,6 @@ const DataExportPage = ({ onClose }) => {
     todaysNew: 0
   });
 
-  // General filters
   const [filters, setFilters] = useState({
     source: 'all',
     dateFrom: '',
@@ -57,12 +55,10 @@ const DataExportPage = ({ onClose }) => {
     newToday: 0
   });
 
-  // Load memory stats on mount
   useEffect(() => {
     const stats = memoryService.getStats();
     let todaysNew = 0;
 
-    // Check if getTodaysNew exists before calling
     if (memoryService.getTodaysNew && typeof memoryService.getTodaysNew === 'function') {
       todaysNew = memoryService.getTodaysNew().length;
     }
@@ -141,8 +137,7 @@ const DataExportPage = ({ onClose }) => {
     const preview = prepareDataForPreview(filtered);
     setPreviewData(preview);
 
-    // Update memory stats for current view
-    const newInView = filtered.filter(t => 
+    const newInView = filtered.filter(t =>
       memoryService.isNew(t.link || t.detail_url || t.url)
     ).length;
 
@@ -152,26 +147,18 @@ const DataExportPage = ({ onClose }) => {
     }));
   };
 
-  // Apply all filters (general + ToR)
   const applyAllFilters = (tenders) => {
     let filtered = applyGeneralFilters(tenders);
-
     if (activeTab === 'tor') {
       filtered = applyTorFilters(filtered);
     }
-
     return filtered;
   };
 
-  // Apply general filters (source, date, search)
   const applyGeneralFilters = (tenders) => {
     return tenders.filter(tender => {
-      // Source filter
-      if (filters.source !== 'all' && tender.source !== filters.source) {
-        return false;
-      }
+      if (filters.source !== 'all' && tender.source !== filters.source) return false;
 
-      // Search term filter
       if (filters.searchTerm) {
         const searchLower = filters.searchTerm.toLowerCase();
         const titleMatch = tender.title?.toLowerCase().includes(searchLower);
@@ -181,67 +168,49 @@ const DataExportPage = ({ onClose }) => {
         const orgMatch = tender.organization?.toLowerCase().includes(searchLower) ||
           tender.procuring_entity?.toLowerCase().includes(searchLower);
 
-        if (!titleMatch && !refMatch && !orgMatch) {
-          return false;
-        }
+        if (!titleMatch && !refMatch && !orgMatch) return false;
       }
 
-      // Date filters
       const tenderDate = tender.publication_date || tender.posted || tender.date;
       if (filters.dateFrom && tenderDate) {
-        if (moment(tenderDate, ['DD/MM/YYYY', 'YYYY-MM-DD']).isBefore(moment(filters.dateFrom))) {
-          return false;
-        }
+        if (moment(tenderDate, ['DD/MM/YYYY', 'YYYY-MM-DD']).isBefore(moment(filters.dateFrom))) return false;
       }
       if (filters.dateTo && tenderDate) {
-        if (moment(tenderDate, ['DD/MM/YYYY', 'YYYY-MM-DD']).isAfter(moment(filters.dateTo))) {
-          return false;
-        }
+        if (moment(tenderDate, ['DD/MM/YYYY', 'YYYY-MM-DD']).isAfter(moment(filters.dateTo))) return false;
       }
 
-      // Status filter
       if (filters.status !== 'all') {
-        if (filters.status === 'active' && tender.status?.toLowerCase() !== 'active') {
-          return false;
-        }
-        if (filters.status === 'closed' && tender.status?.toLowerCase() === 'active') {
-          return false;
-        }
+        if (filters.status === 'active' && tender.status?.toLowerCase() !== 'active') return false;
+        if (filters.status === 'closed' && tender.status?.toLowerCase() === 'active') return false;
       }
 
       return true;
     });
   };
 
-  // Apply ToR-specific filters
   const applyTorFilters = (tenders) => {
     let filtered = [...tenders];
 
-    // Filter by ToR relevance
     if (torFilters.showTorOnly) {
       filtered = filtered.filter(t => torService.isTorRelevant(t));
     }
 
-    // Filter by document type
     if (torFilters.documentType !== 'all') {
-      filtered = filtered.filter(t => 
+      filtered = filtered.filter(t =>
         torService.detectDocumentType(t) === torFilters.documentType
       );
     }
 
-    // Filter by new only
     if (torFilters.showOnlyNew) {
       filtered = memoryService.getNewTenders(filtered);
     }
 
-    // Filter by minimum keyword matches
     if (torFilters.minKeywords > 0) {
-      filtered = filtered.filter(t => 
+      filtered = filtered.filter(t =>
         torService.getMatchingKeywords(t).length >= torFilters.minKeywords
       );
     }
 
-    // Filter by selected keywords
     if (torFilters.selectedKeywords.length > 0) {
       filtered = filtered.filter(t => {
         const keywords = torService.getMatchingKeywords(t);
@@ -252,7 +221,6 @@ const DataExportPage = ({ onClose }) => {
     return filtered;
   };
 
-  // Prepare data for preview with ToR fields
   const prepareDataForPreview = (tenders) => {
     return tenders.slice(0, 100).map((tender, index) => {
       const keywords = torService.getMatchingKeywords(tender);
@@ -273,7 +241,6 @@ const DataExportPage = ({ onClose }) => {
     });
   };
 
-  // Prepare data for Excel export (ToR format)
   const prepareDataForTorExport = () => {
     const allTenders = flattenTenders(tenderData);
     const filteredTenders = applyAllFilters(allTenders);
@@ -301,7 +268,6 @@ const DataExportPage = ({ onClose }) => {
     });
   };
 
-  // Legacy export format (for backward compatibility)
   const prepareDataForLegacyExport = () => {
     const allTenders = flattenTenders(tenderData);
     const filteredTenders = applyGeneralFilters(allTenders);
@@ -326,7 +292,7 @@ const DataExportPage = ({ onClose }) => {
     try {
       setDownloading(true);
 
-      const exportData = activeTab === 'tor' 
+      const exportData = activeTab === 'tor'
         ? prepareDataForTorExport()
         : prepareDataForLegacyExport();
 
@@ -339,7 +305,6 @@ const DataExportPage = ({ onClose }) => {
       const wb = XLSX.utils.book_new();
       const ws = XLSX.utils.json_to_sheet(exportData);
 
-      // Auto-size columns (basic)
       const colWidths = [];
       if (exportData.length > 0) {
         Object.keys(exportData[0]).forEach(key => {
@@ -356,9 +321,8 @@ const DataExportPage = ({ onClose }) => {
 
       XLSX.writeFile(wb, filename);
 
-      // Mark exported tenders as seen
       if (activeTab === 'tor') {
-        const exportedTenders = flattenTenders(tenderData).filter(t => 
+        const exportedTenders = flattenTenders(tenderData).filter(t =>
           applyAllFilters([t]).length > 0
         );
         memoryService.markMultipleAsSeen(exportedTenders);
@@ -455,20 +419,18 @@ const DataExportPage = ({ onClose }) => {
 
   const generateDailyDigest = () => {
     const allTenders = flattenTenders(tenderData);
-    const todaysNew = allTenders.filter(t => 
+    const todaysNew = allTenders.filter(t =>
       t.scraped_at && moment(t.scraped_at).isSame(new Date(), 'day')
     );
 
     const torOpportunities = todaysNew.filter(t => torService.isTorRelevant(t));
 
-    // Group by document type
     const byType = {};
     torOpportunities.forEach(t => {
       const type = torService.detectDocumentType(t);
       byType[type] = (byType[type] || 0) + 1;
     });
 
-    // Create digest message
     const digestMessage = `
 📅 **DAILY DIGEST REPORT - ${moment().format('MMMM D, YYYY')}**
 
@@ -481,7 +443,7 @@ const DataExportPage = ({ onClose }) => {
       ${Object.entries(byType).map(([type, count]) => `  • ${type}: ${count}`).join('\n')}
 
 📊 **Top Opportunities**
-      ${torOpportunities.slice(0, 5).map((t, i) => 
+      ${torOpportunities.slice(0, 5).map((t, i) =>
         `  ${i+1}. ${t.title?.substring(0, 60)}... (${torService.detectDocumentType(t)})`
       ).join('\n')}
 
@@ -514,23 +476,8 @@ const DataExportPage = ({ onClose }) => {
     Export tender data in Excel format with filtering options
     </p>
     </div>
-    <div style={{ display: 'flex', gap: '10px' }}>
-    <button 
-    className="digest-btn" 
-    onClick={generateDailyDigest}
-    style={{ 
-      background: '#ebbcba', 
-        color: '#191724', 
-        border: 'none',
-        padding: '10px 20px',
-        borderRadius: '5px',
-        cursor: 'pointer',
-        display: 'flex',
-        alignItems: 'center',
-        gap: '5px',
-        fontFamily: 'Fira Code, monospace'
-    }}
-    >
+    <div className="header-actions">
+    <button className="digest-btn" onClick={generateDailyDigest}>
     <FiAlertCircle /> Daily Digest
     </button>
     <button className="refresh-btn" onClick={fetchData}>
@@ -540,38 +487,16 @@ const DataExportPage = ({ onClose }) => {
     </div>
 
     {/* Mode Tabs */}
-    <div className="mode-tabs" style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>
+    <div className="mode-tabs">
     <button
-    className={`mode-tab ${activeTab === 'all' ? 'active' : ''}`}
+    className={`mode-tab ${activeTab === 'all' ? 'active-all' : ''}`}
     onClick={() => setActiveTab('all')}
-    style={{
-      padding: '10px 20px',
-        background: activeTab === 'all' ? '#31748f' : '#26233a',
-        color: '#e0def4',
-        border: 'none',
-        borderRadius: '5px',
-        cursor: 'pointer',
-        display: 'flex',
-        alignItems: 'center',
-        gap: '5px'
-    }}
     >
     <FiDatabase /> All Tenders
     </button>
     <button
-    className={`mode-tab ${activeTab === 'tor' ? 'active' : ''}`}
+    className={`mode-tab ${activeTab === 'tor' ? 'active-tor' : ''}`}
     onClick={() => setActiveTab('tor')}
-    style={{
-      padding: '10px 20px',
-        background: activeTab === 'tor' ? '#ebbcba' : '#26233a',
-        color: activeTab === 'tor' ? '#191724' : '#e0def4',
-        border: 'none',
-        borderRadius: '5px',
-        cursor: 'pointer',
-        display: 'flex',
-        alignItems: 'center',
-        gap: '5px'
-    }}
     >
     <FiAward /> ToR Monitor
     </button>
@@ -601,18 +526,16 @@ const DataExportPage = ({ onClose }) => {
     </div>
 
     {/* Memory Stats Bar */}
-    <div className="memory-stats-bar" style={{
-      background: '#1f1d2e',
-        padding: '10px 20px',
-        borderRadius: '8px',
-        marginBottom: '20px',
-        display: 'flex',
-        gap: '20px',
-        border: '1px solid #31748f'
-    }}>
-    <span><FiStar color="#f6c177" /> Total Seen: {memoryStats.totalSeen}</span>
-    <span><FiTrendingUp color="#ebbcba" /> New in View: {memoryStats.newInCurrent}</span>
-    <span><FiAlertCircle color="#c4a7e7" /> Today's New: {memoryStats.todaysNew}</span>
+    <div className="memory-stats-bar">
+    <span className="memory-stat">
+    <FiStar className="star" /> Total Seen: {memoryStats.totalSeen}
+    </span>
+    <span className="memory-stat">
+    <FiTrendingUp className="trending" /> New in View: {memoryStats.newInCurrent}
+    </span>
+    <span className="memory-stat">
+    <FiAlertCircle className="alert" /> Today's New: {memoryStats.todaysNew}
+    </span>
     </div>
 
     {/* Filter Section */}
@@ -653,7 +576,6 @@ const DataExportPage = ({ onClose }) => {
     </div>
     </div>
 
-    {/* Date From */}
     <div>
     <label className="filter-label">From Date</label>
     <input
@@ -664,7 +586,6 @@ const DataExportPage = ({ onClose }) => {
     />
     </div>
 
-    {/* Date To */}
     <div>
     <label className="filter-label">To Date</label>
     <input
@@ -675,7 +596,6 @@ const DataExportPage = ({ onClose }) => {
     />
     </div>
 
-    {/* Status Filter */}
     <div>
     <label className="filter-label">Status</label>
     <select
@@ -690,13 +610,11 @@ const DataExportPage = ({ onClose }) => {
     </div>
     </div>
 
-    {/* ToR-Specific Filters (only show in ToR mode) */}
     {activeTab === 'tor' && (
-      <div className="tor-filters" style={{ marginTop: '20px', borderTop: '1px solid #31748f', paddingTop: '20px' }}>
-      <h4 style={{ color: '#ebbcba', marginBottom: '15px' }}>📋 ToR Specific Filters</h4>
+      <div className="tor-filters">
+      <h4>📋 ToR Specific Filters</h4>
 
       <div className="filter-grid">
-      {/* Document Type */}
       <div>
       <label className="filter-label">Document Type</label>
       <select
@@ -712,7 +630,6 @@ const DataExportPage = ({ onClose }) => {
       </select>
       </div>
 
-      {/* Minimum Keywords */}
       <div>
       <label className="filter-label">Minimum Keywords</label>
       <select
@@ -727,9 +644,8 @@ const DataExportPage = ({ onClose }) => {
       </select>
       </div>
 
-      {/* Checkboxes */}
-      <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
-      <label style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+      <div className="checkbox-group">
+      <label className="checkbox-label">
       <input
       type="checkbox"
       checked={torFilters.showTorOnly}
@@ -738,7 +654,7 @@ const DataExportPage = ({ onClose }) => {
       Show only ToR-relevant
       </label>
 
-      <label style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+      <label className="checkbox-label">
       <input
       type="checkbox"
       checked={torFilters.showOnlyNew}
@@ -748,7 +664,6 @@ const DataExportPage = ({ onClose }) => {
       </label>
       </div>
 
-      {/* Keyword Selection */}
       <div style={{ gridColumn: 'span 2' }}>
       <label className="filter-label">Filter by Keywords</label>
       <select
@@ -765,14 +680,13 @@ const DataExportPage = ({ onClose }) => {
         <option key={keyword} value={keyword}>{keyword}</option>
       ))}
       </select>
-      <small style={{ color: '#908caa' }}>Ctrl+click to select multiple</small>
+      <small className="filter-hint">Ctrl+click to select multiple</small>
       </div>
       </div>
 
-      {/* Preset Buttons */}
-      <div style={{ display: 'flex', gap: '10px', marginTop: '15px', flexWrap: 'wrap' }}>
-      <button 
-      className="preset-btn"
+      <div className="preset-buttons">
+      <button
+      className="preset-btn pine"
       onClick={() => {
         setTorFilters({
           documentType: 'ToR',
@@ -782,21 +696,12 @@ const DataExportPage = ({ onClose }) => {
           selectedKeywords: []
         });
       }}
-      style={{ 
-        background: '#31748f', 
-          color: '#e0def4', 
-          padding: '8px 15px', 
-          border: 'none', 
-          borderRadius: '5px', 
-          cursor: 'pointer',
-          fontFamily: 'Fira Code, monospace'
-      }}
       >
       🔍 New ToRs Only
       </button>
 
-      <button 
-      className="preset-btn"
+      <button
+      className="preset-btn iris"
       onClick={() => {
         setTorFilters({
           documentType: 'all',
@@ -806,31 +711,13 @@ const DataExportPage = ({ onClose }) => {
           selectedKeywords: []
         });
       }}
-      style={{ 
-        background: '#c4a7e7', 
-          color: '#191724', 
-          padding: '8px 15px', 
-          border: 'none', 
-          borderRadius: '5px', 
-          cursor: 'pointer',
-          fontFamily: 'Fira Code, monospace'
-      }}
       >
       📊 High Relevance (2+ keywords)
       </button>
 
-      <button 
-      className="preset-btn"
+      <button
+      className="preset-btn outline"
       onClick={clearFilters}
-      style={{ 
-        background: '#26233a', 
-          color: '#e0def4', 
-          padding: '8px 15px', 
-          border: '1px solid #908caa', 
-          borderRadius: '5px', 
-          cursor: 'pointer',
-          fontFamily: 'Fira Code, monospace'
-      }}
       >
       🧹 Reset All
       </button>
@@ -838,20 +725,18 @@ const DataExportPage = ({ onClose }) => {
       </div>
     )}
 
-    {/* Clear Filters Button */}
-    <div style={{ marginTop: '15px', textAlign: 'right' }}>
+    <div className="filter-actions">
     <button className="clear-filters-btn" onClick={clearFilters}>
     Clear All Filters
     </button>
     </div>
     </div>
 
-    {/* Preview Controls */}
     <div className="preview-controls">
     <div className="preview-info">
     <FiEye className="preview-icon" />
     <span className="preview-text">
-    Live Preview ({previewData.length} items 
+    Live Preview ({previewData.length} items
       {memoryStats.newInCurrent > 0 && `, ${memoryStats.newInCurrent} new`})
     </span>
     </div>
@@ -871,7 +756,6 @@ const DataExportPage = ({ onClose }) => {
     </div>
     </div>
 
-    {/* Live Preview */}
     <div className="preview-container">
     {previewData.length > 0 ? (
       <>
@@ -916,14 +800,12 @@ const DataExportPage = ({ onClose }) => {
     )}
     </div>
 
-    {/* Pagination Info */}
     {previewData.length > 0 && (
       <div className="pagination-info">
       <span>Showing {previewData.length} of {getFilteredCount()} total items</span>
       </div>
     )}
 
-    {/* Export Actions */}
     <div className="export-actions">
     <button
     className="export-excel-btn"
@@ -931,9 +813,9 @@ const DataExportPage = ({ onClose }) => {
     disabled={downloading || getFilteredCount() === 0}
     >
     {downloading ? <FiRefreshCw className="spin" /> : <FiDownload />}
-    {downloading ? 'Generating...' : 
-        activeTab === 'tor' 
-        ? `📊 Export ToR Report (${getFilteredCount()} items)` 
+    {downloading ? 'Generating...' :
+        activeTab === 'tor'
+        ? `📊 Export ToR Report (${getFilteredCount()} items)`
         : `📥 Download Excel (${getFilteredCount()} items)`}
     </button>
 
@@ -948,7 +830,6 @@ const DataExportPage = ({ onClose }) => {
     )}
     </div>
 
-    {/* Download History */}
     <div className="download-history">
     <h3 className="history-title">
     <FiClock className="history-icon" /> Download History

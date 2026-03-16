@@ -1,25 +1,36 @@
+from config import config_by_name
 from datetime import datetime
+from dotenv import load_dotenv
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 from scrapers import get_all_scrapers, get_scraper, discover_scrapers
 import os
 import sys
 import traceback
-from dotenv import load_dotenv  # Add this import
 
 # Load environment variables from .env file
-load_dotenv()  # This looks for .env in the current directory or parent
+load_dotenv()
 
 # Now you can access environment variables
 UNGM_USERNAME = os.getenv('UNGM_USERNAME')
 UNGM_PASSWORD = os.getenv('UNGM_PASSWORD')
+
 # Add scrapers to path
 sys.path.append(os.path.join(os.path.dirname(__file__), 'scrapers'))
 
-# Import the scraper registry
+# Import config AFTER environment variables but BEFORE creating app
 
+# Get environment
+env = os.environ.get('FLASK_ENV', 'production')
+
+# Create Flask app FIRST
 app = Flask(__name__)
-CORS(app)  # Enable CORS for all routes
+
+# Configure app using the config object
+app.config.from_object(config_by_name[env])
+
+# Enable CORS
+CORS(app)
 
 # Discover all scrapers on startup
 scrapers = discover_scrapers()
@@ -82,7 +93,9 @@ def health_check():
         'status': 'healthy',
         'timestamp': datetime.now().isoformat(),
         'message': 'Tender Scraper API is running',
-        'scrapers_loaded': len(scrapers)
+        'scrapers_loaded': len(scrapers),
+        'environment': env,
+        'debug': app.config['DEBUG']
         })
 
 
@@ -201,19 +214,30 @@ def run_scraper(source, force_refresh=False):
     # Check cache first
     if not force_refresh and cache[source]['timestamp'] is not None:
         # Return cached data if less than 5 minutes old
-        cache_time = datetime.fromisoformat(cache[source]['timestamp'])
-        time_diff = datetime.now() - cache_time
-        if time_diff.seconds < 300:  # 5 minutes
-            print(f"Returning cached data for {source}")
-            return cache[source]['data']
+        try:
+            cache_time = datetime.fromisoformat(cache[source]['timestamp'])
+            time_diff = datetime.now() - cache_time
+            if time_diff.seconds < 300:  # 5 minutes
+                print(f"📦 Returning cached data for {source}")
+                return cache[source]['data']
+        except ValueError as e:
+            print(f"⚠️ Invalid timestamp format for {source}: {e}")
+        except TypeError as e:
+            print(f"⚠️ Invalid timestamp type for {source}: {e}")
+        except Exception as e:
+            print(f"⚠️ Unexpected error checking cache for {source}: {e}")
 
     # Run scraper
-    print(f"Running {source} scraper...")
+    print(f"🔍 Running {source} scraper...")
 
     scraper_class = get_scraper(source)
     if scraper_class:
-        scraper = scraper_class()
-        data = scraper.scrape()
+        try:
+            scraper = scraper_class()
+            data = scraper.scrape()
+        except Exception as e:
+            print(f"❌ Error running {source} scraper: {e}")
+            data = []
     else:
         data = []
 
@@ -221,7 +245,7 @@ def run_scraper(source, force_refresh=False):
     cache[source]['data'] = data
     cache[source]['timestamp'] = datetime.now().isoformat()
 
-    print(f"Scraped {len(data)} items from {source}")
+    print(f"✅ Scraped {len(data)} items from {source}")
     return data
 
 
@@ -319,5 +343,18 @@ if __name__ == '__main__':
     print("   GET /api/export/json - Export all data as JSON")
     print("   GET /api/export/csv - Export all data as CSV")
     print("=" * 60)
-    print("\n🚀 Server starting on http://localhost:5000")
-    app.run(debug=True, host='0.0.0.0', port=5000)
+
+    # Get configuration from environment
+    debug_mode = app.config['DEBUG']
+    port = int(os.environ.get('PORT', 5000))
+    host = os.environ.get('HOST', '0.0.0.0')
+
+    print(f"\n🚀 Server starting on http://{host}:{port}")
+    print(f"🔧 Debug mode: {'ON' if debug_mode else 'OFF'}")
+    print(f"📁 Environment: {env}")
+    print("=" * 60)
+
+    # Start the server
+    app.run(debug=debug_mode, host=host, port=port)
+
+# finish

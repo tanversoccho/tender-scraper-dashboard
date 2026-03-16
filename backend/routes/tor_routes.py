@@ -1,4 +1,3 @@
-# backend/routes/tor_routes.py
 from flask import Blueprint, request, jsonify, send_file
 from datetime import datetime
 import os
@@ -53,6 +52,7 @@ def scan_all_sources():
 
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
+
 
 @tor_bp.route('/daily-digest', methods=['GET'])
 def get_daily_digest():

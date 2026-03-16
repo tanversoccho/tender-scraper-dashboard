@@ -1,14 +1,10 @@
 #!/usr/bin/env python
-"""
-Tender Scraper Backend Runner
-Run this script to start the backend server
-"""
 
 import os
-import sys
 import subprocess
-import webbrowser
-from time import sleep
+import sys
+# from time import sleep
+# import webbrowser
 
 
 def main():
@@ -38,8 +34,8 @@ def main():
     print("=" * 60)
 
     # Open browser after 2 seconds
-    sleep(2)
-    webbrowser.open('http://localhost:5000/api/health')
+    # sleep(2)
+    # webbrowser.open('http://localhost:5000/api/health')
 
     # Run the app
     os.environ['FLASK_APP'] = 'app.py'
