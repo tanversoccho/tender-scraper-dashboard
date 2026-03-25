@@ -8,100 +8,101 @@ import os
 import sys
 import traceback
 
-# Load environment variables from .env file
+# load environment variables from .env file
 load_dotenv()
 
-# Now you can access environment variables
-UNGM_USERNAME = os.getenv('UNGM_USERNAME')
-UNGM_PASSWORD = os.getenv('UNGM_PASSWORD')
+# now you can access environment variables
+ungm_username = os.getenv('ungm_username')
+ungm_password = os.getenv('ungm_password')
 
-# Add scrapers to path
+# add scrapers to path
 sys.path.append(os.path.join(os.path.dirname(__file__), 'scrapers'))
 
-# Import config AFTER environment variables but BEFORE creating app
+# import config after environment variables but before creating app
 
-# Get environment
-env = os.environ.get('FLASK_ENV', 'production')
+# get environment
+# env = os.environ.get('flask_env', 'production')
+env = os.environ.get('flask_env', 'development')
 
-# Create Flask app FIRST
+# create flask app first
 app = Flask(__name__)
 
-# Configure app using the config object
+# configure app using the config object
 app.config.from_object(config_by_name[env])
 
-# Enable CORS
+# enable cors
 CORS(app)
 
-# Discover all scrapers on startup
+# discover all scrapers on startup
 scrapers = discover_scrapers()
 
-# Store last scraped data - dynamic cache
+# store last scraped data - dynamic cache
 cache = {}
 
 
 @app.route('/')
 def index():
-    """Root endpoint - redirect to API documentation"""
+    """root endpoint - redirect to api documentation"""
     scraper_list = get_all_scrapers()
     endpoints = [
-            {'path': '/api/health', 'method': 'GET', 'description': 'Health check'},
-            {'path': '/api/scrapers', 'method': 'GET', 'description': 'List all available scrapers'},
-            {'path': '/api/stats', 'method': 'GET', 'description': 'Scraper statistics'},
-            {'path': '/api/scrape/all', 'method': 'GET', 'description': 'Run all scrapers'},
+            {'path': '/api/health', 'method': 'get', 'description': 'health check'},
+            {'path': '/api/scrapers', 'method': 'get', 'description': 'list all available scrapers'},
+            {'path': '/api/stats', 'method': 'get', 'description': 'scraper statistics'},
+            {'path': '/api/scrape/all', 'method': 'get', 'description': 'run all scrapers'},
             ]
 
-    # Add dynamic endpoints for each scraper
+    # add dynamic endpoints for each scraper
     for scraper_name, scraper_info in scraper_list.items():
         endpoints.append({
             'path': f'/api/scrape/{scraper_name}',
-            'method': 'GET',
-            'description': f'Run {scraper_info["display_name"]} scraper'
+            'method': 'get',
+            'description': f'run {scraper_info["display_name"]} scraper'
             })
         endpoints.append({
             'path': f'/api/data/{scraper_name}',
-            'method': 'GET',
-            'description': f'Get cached {scraper_info["display_name"]} data'
+            'method': 'get',
+            'description': f'get cached {scraper_info["display_name"]} data'
             })
 
     endpoints.extend([
-        {'path': '/api/export/json', 'method': 'GET', 'description': 'Export all data as JSON'},
-        {'path': '/api/export/csv', 'method': 'GET', 'description': 'Export all data as CSV'}
+        {'path': '/api/export/json', 'method': 'get', 'description': 'export all data as json'},
+        {'path': '/api/export/csv', 'method': 'get', 'description': 'export all data as csv'}
         ])
 
     return jsonify({
-        'name': 'Tender Scraper API',
+        'name': 'tender scraper api',
         'version': '1.0.0',
-        'description': 'API for scraping tender data from various sources',
+        'description': 'api for scraping tender data from various sources',
         'documentation': {
             'endpoints': endpoints,
-            'usage': 'Add ?force=true to bypass cache and force fresh scraping'
+            'usage': 'add ?force=true to bypass cache and force fresh scraping'
             },
         'timestamp': datetime.now().isoformat()
         })
 
 
-@app.route('/api/scrapers', methods=['GET'])
+@app.route('/api/scrapers', methods=['get'])
 def list_scrapers():
-    """List all available scrapers"""
+    """list all available scrapers"""
     return jsonify(get_all_scrapers())
 
 
-@app.route('/api/health', methods=['GET'])
+@app.route('/api/health', methods=['get'])
 def health_check():
-    """Health check endpoint"""
+    """health check endpoint"""
     return jsonify({
         'status': 'healthy',
         'timestamp': datetime.now().isoformat(),
-        'message': 'Tender Scraper API is running',
+        'message': 'tender scraper api is running',
         'scrapers_loaded': len(scrapers),
         'environment': env,
-        'debug': app.config['DEBUG']
+        'debug': app.config.get('DEBUG', True)
         })
 
 
-@app.route('/api/scrape/all', methods=['GET'])
+@app.route('/api/scrape/all', methods=['get'])
 def scrape_all():
-    """Run all scrapers and return combined data"""
+    """run all scrapers and return combined data"""
     try:
         force_refresh = request.args.get('force', 'false').lower() == 'true'
         scraper_list = get_all_scrapers()
@@ -123,9 +124,9 @@ def scrape_all():
             }), 500
 
 
-@app.route('/api/scrape/<source>', methods=['GET'])
+@app.route('/api/scrape/<source>', methods=['get'])
 def scrape_source(source):
-    """Run specific scraper"""
+    """run specific scraper"""
     try:
         force_refresh = request.args.get('force', 'false').lower() == 'true'
         scraper_list = get_all_scrapers()
@@ -133,7 +134,7 @@ def scrape_source(source):
         if source not in scraper_list:
             return jsonify({
                 'success': False,
-                'error': f'Invalid source: {source}. Available: {list(scraper_list.keys())}'
+                'error': f'invalid source: {source}. available: {list(scraper_list.keys())}'
                 }), 400
 
         data = run_scraper(source, force_refresh)
@@ -153,18 +154,18 @@ def scrape_source(source):
             }), 500
 
 
-@app.route('/api/data/<source>', methods=['GET'])
+@app.route('/api/data/<source>', methods=['get'])
 def get_cached_data(source):
-    """Get cached data without scraping"""
+    """get cached data without scraping"""
     scraper_list = get_all_scrapers()
 
     if source not in scraper_list:
         return jsonify({
             'success': False,
-            'error': f'Invalid source: {source}. Available: {list(scraper_list.keys())}'
+            'error': f'invalid source: {source}. available: {list(scraper_list.keys())}'
             }), 400
 
-    # Initialize cache if not exists
+    # initialize cache if not exists
     if source not in cache:
         cache[source] = {'data': [], 'timestamp': None}
 
@@ -176,9 +177,9 @@ def get_cached_data(source):
         })
 
 
-@app.route('/api/stats', methods=['GET'])
+@app.route('/api/stats', methods=['get'])
 def get_stats():
-    """Get scraping statistics"""
+    """get scraping statistics"""
     stats = {}
     scraper_list = get_all_scrapers()
 
@@ -206,29 +207,29 @@ def get_stats():
 
 
 def run_scraper(source, force_refresh=False):
-    """Run specific scraper with caching"""
-    # Initialize cache if not exists
+    """run specific scraper with caching"""
+    # initialize cache if not exists
     if source not in cache:
         cache[source] = {'data': [], 'timestamp': None}
 
-    # Check cache first
+    # check cache first
     if not force_refresh and cache[source]['timestamp'] is not None:
-        # Return cached data if less than 5 minutes old
+        # return cached data if less than 5 minutes old
         try:
             cache_time = datetime.fromisoformat(cache[source]['timestamp'])
             time_diff = datetime.now() - cache_time
             if time_diff.seconds < 300:  # 5 minutes
-                print(f"📦 Returning cached data for {source}")
+                print(f"📦 returning cached data for {source}")
                 return cache[source]['data']
         except ValueError as e:
-            print(f"⚠️ Invalid timestamp format for {source}: {e}")
+            print(f"⚠️ invalid timestamp format for {source}: {e}")
         except TypeError as e:
-            print(f"⚠️ Invalid timestamp type for {source}: {e}")
+            print(f"⚠️ invalid timestamp type for {source}: {e}")
         except Exception as e:
-            print(f"⚠️ Unexpected error checking cache for {source}: {e}")
+            print(f"⚠️ unexpected error checking cache for {source}: {e}")
 
-    # Run scraper
-    print(f"🔍 Running {source} scraper...")
+    # run scraper
+    print(f"🔍 running {source} scraper...")
 
     scraper_class = get_scraper(source)
     if scraper_class:
@@ -236,24 +237,24 @@ def run_scraper(source, force_refresh=False):
             scraper = scraper_class()
             data = scraper.scrape()
         except Exception as e:
-            print(f"❌ Error running {source} scraper: {e}")
+            print(f"❌ error running {source} scraper: {e}")
             data = []
     else:
         data = []
 
-    # Update cache
+    # update cache
     cache[source]['data'] = data
     cache[source]['timestamp'] = datetime.now().isoformat()
 
-    print(f"✅ Scraped {len(data)} items from {source}")
+    print(f"✅ scraped {len(data)} items from {source}")
     return data
 
 
-@app.route('/api/export/json', methods=['GET'])
+@app.route('/api/export/json', methods=['get'])
 def export_json():
-    """Export all data as JSON"""
+    """export all data as json"""
     try:
-        # Combine all data
+        # combine all data
         all_data = []
         for source in cache:
             for item in cache[source]['data']:
@@ -274,11 +275,11 @@ def export_json():
             }), 500
 
 
-@app.route('/api/export/csv', methods=['GET'])
+@app.route('/api/export/csv', methods=['get'])
 def export_csv():
-    """Export all data as CSV (simple format)"""
+    """export all data as csv (simple format)"""
     try:
-        # Combine all data
+        # combine all data
         all_data = []
         for source in cache:
             for item in cache[source]['data']:
@@ -286,25 +287,25 @@ def export_csv():
                 item_copy['source'] = source
                 all_data.append(item_copy)
 
-        # Create CSV manually without pandas
+        # create csv manually without pandas
         if not all_data:
-            csv_content = "No data available"
+            csv_content = "no data available"
         else:
-            # Get all unique keys
+            # get all unique keys
             keys = set()
             for item in all_data:
                 keys.update(item.keys())
             keys = sorted(list(keys))
 
-            # Create CSV header
+            # create csv header
             csv_content = ",".join([f'"{k}"' for k in keys]) + "\n"
 
-            # Create CSV rows
+            # create csv rows
             for item in all_data:
                 row = []
                 for key in keys:
                     value = item.get(key, "")
-                    # Escape quotes and wrap in quotes
+                    # escape quotes and wrap in quotes
                     if isinstance(value, str):
                         value = value.replace('"', '""')
                         row.append(f'"{value}"')
@@ -328,33 +329,33 @@ def export_csv():
 
 if __name__ == '__main__':
     print("=" * 60)
-    print("📊 Tender Scraper API Server")
+    print("📊 tender scraper api server")
     print("=" * 60)
-    print(f"✅ Loaded {len(scrapers)} scrapers:")
+    print(f"✅ loaded {len(scrapers)} scrapers:")
     for name, info in get_all_scrapers().items():
         print(f"   - {info['display_name']} ({name})")
-    print("\n📱 Endpoints:")
-    print("   GET /api/health - Health check")
-    print("   GET /api/scrapers - List all scrapers")
-    print("   GET /api/stats - Scraper statistics")
-    print("   GET /api/scrape/all - Run all scrapers")
+    print("\n📱 endpoints:")
+    print("   get /api/health - health check")
+    print("   get /api/scrapers - list all scrapers")
+    print("   get /api/stats - scraper statistics")
+    print("   get /api/scrape/all - run all scrapers")
     for name in get_all_scrapers():
-        print(f"   GET /api/scrape/{name} - Run {name} scraper")
-    print("   GET /api/export/json - Export all data as JSON")
-    print("   GET /api/export/csv - Export all data as CSV")
+        print(f"   get /api/scrape/{name} - run {name} scraper")
+    print("   get /api/export/json - export all data as json")
+    print("   get /api/export/csv - export all data as csv")
     print("=" * 60)
 
-    # Get configuration from environment
-    debug_mode = app.config['DEBUG']
-    port = int(os.environ.get('PORT', 5000))
-    host = os.environ.get('HOST', '0.0.0.0')
+    # get configuration from environment
+    debug_mode = True
+    port = int(os.environ.get('port', 5000))
+    host = os.environ.get('host', '0.0.0.0')
 
-    print(f"\n🚀 Server starting on http://{host}:{port}")
-    print(f"🔧 Debug mode: {'ON' if debug_mode else 'OFF'}")
-    print(f"📁 Environment: {env}")
+    print(f"\n🚀 server starting on http://{host}:{port}")
+    print(f"🔧 debug mode: {'on' if debug_mode else 'off'}")
+    print(f"📁 environment: {env}")
     print("=" * 60)
 
-    # Start the server
+    # start the server
     app.run(debug=debug_mode, host=host, port=port)
 
 # finish

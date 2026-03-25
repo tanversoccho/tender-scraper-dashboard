@@ -24,22 +24,22 @@ const TenderCard = ({ tender }) => {
   // Helper function to get date information
   const getDateInfo = () => {
     if (tender.source === 'bdjobs' && tender.posted) {
-      return { label: 'Posted', value: tender.posted };
+      return { label: 'Deadline', value: tender.deadline || 'No deadline' };
     }
     if (tender.source === 'undp') {
       return { label: 'Deadline', value: tender.deadline || 'No deadline' };
     }
     if (tender.source === 'pksf') {
-      return { label: 'Date', value: tender.date || 'No date' };
+      return { label: 'Deadline', value: tender.deadline || 'No deadline' };
     }
     if (tender.source === 'care') {
-      return { label: 'Scraped', value: tender.scraped_at ? new Date(tender.scraped_at).toLocaleDateString() : 'Unknown' };
+      return { label: 'Deadline', value: tender.deadline || 'No deadline' };
     }
     if (tender.source === 'ungm') {
       return { label: 'Deadline', value: tender.deadline || 'No deadline' };
     }
     if (tender.source === 'worldbank') {
-      return { label: 'Approval', value: tender.approval_date || 'Pending' };
+      return { label: 'Deadline', value: tender.deadline || 'No deadline' };
     }
     if (tender.source === 'bppa') {
       return {

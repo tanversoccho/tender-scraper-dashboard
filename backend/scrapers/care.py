@@ -36,8 +36,15 @@ class CareScraper:
             for i, card in enumerate(cards):  # Limit to 10 items
                 try:
                     # Deadline
-                    deadline_tag = card.select_one("p i") or card.select_one(".deadline") or card.select_one(".date")
-                    deadline = deadline_tag.get_text(strip=True) if deadline_tag else f"Deadline {i+1}"
+                    deadline_tag = card.select_one("p") or card.select_one("p i") or card.select_one(".deadline") or card.select_one(".date")
+                    if deadline_tag:
+                        deadline_text = deadline_tag.get_text(strip=True)
+                        if "Deadline:" in deadline_text:
+                            deadline = deadline_text.split("Deadline:")[-1].strip()
+                        else:
+                            deadline = deadline_text
+                    else:
+                        deadline = deadline_tag.get_text(strip=True) if deadline_tag else f"Deadline {i+1}"
 
                     # Title
                     p_tags = card.find_all("p")

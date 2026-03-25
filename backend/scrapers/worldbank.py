@@ -19,7 +19,7 @@ except ImportError:
     print("⚠️ Selenium not installed. Install with: pip install selenium webdriver-manager")
 
 
-@register_scraper('worldbank', display_name='World Bank RFx Now')
+@register_scraper('worldbank', display_name='World Bank')
 class WorldBankScraper:
     def __init__(self, use_selenium=True):
         self.base_url = "https://wbgeprocure-rfxnow.worldbank.org"
