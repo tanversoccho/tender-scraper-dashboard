@@ -45,6 +45,33 @@ class WorldBankScraper:
             print(f"❌ Failed to setup Chrome driver: {e}")
             return False
 
+    # def _scrape_with_selenium(self):
+    #     """Scrape using Selenium to handle JavaScript-rendered content"""
+    #     if not self._setup_driver():
+    #         return []
+    #
+    #     try:
+    #         print("🔍 Loading World Bank page with Selenium...")
+    #         self.driver.get(self.url)
+    #
+    #         # Wait for table to load
+    #         wait = WebDriverWait(self.driver, 10)
+    #         wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "table.table-condensed tbody tr")))
+    #
+    #         # Give extra time for all data to load
+    #         time.sleep(2)
+    #
+    #         # Get page source after JavaScript execution
+    #         html = self.driver.page_source
+    #         return self._parse_html(html)
+    #
+    #     except Exception as e:
+    #         print(f"❌ Selenium scraping error: {e}")
+    #         return []
+    #     finally:
+    #         if self.driver:
+    #             self.driver.quit()
+
     def _scrape_with_selenium(self):
         """Scrape using Selenium to handle JavaScript-rendered content with pagination"""
         if not self._setup_driver():
@@ -53,8 +80,6 @@ class WorldBankScraper:
         all_tenders = []
         page = 1
         max_pages = 20  # Safety limit
-        previous_tender_count = 0
-        no_change_count = 0
 
         try:
             print(f"🔍 Loading World Bank page with Selenium...")
@@ -73,101 +98,25 @@ class WorldBankScraper:
                 # Get current page HTML and parse
                 html = self.driver.page_source
                 page_tenders = self._parse_html(html)
-
-                # Avoid duplicate tenders
-                current_titles = [t['title'] for t in page_tenders]
-                for tender in page_tenders:
-                    if not any(t['title'] == tender['title'] for t in all_tenders):
-                        all_tenders.append(tender)
-
+                all_tenders.extend(page_tenders)
                 print(f"  Found {len(page_tenders)} tenders on page {page}")
-                print(f"  Total unique tenders so far: {len(all_tenders)}")
-
-                # Check if we got new data
-                if len(all_tenders) == previous_tender_count:
-                    no_change_count += 1
-                    if no_change_count >= 2:
-                        print("No new data after 2 pages, stopping")
-                        break
-                else:
-                    no_change_count = 0
-                    previous_tender_count = len(all_tenders)
 
                 # Try to find and click next button
                 try:
-                    # Look for pagination container with various selectors
-                    pagination = None
-                    for selector in [".pagination", "ul.pagination", "div.pagination", ".dataTables_paginate"]:
-                        try:
-                            pagination = self.driver.find_element(By.CSS_SELECTOR, selector)
-                            if pagination:
-                                break
-                        except:
-                            continue
-
-                    if not pagination:
-                        print("No pagination controls found, stopping")
-                        break
-
-                    # Find next button - try different selectors
-                    next_button = None
-                    for selector in ["a.next:not(.disabled)", "li.next:not(.disabled) a", "a[rel='next']", 
-                                     "button.next", "a:contains('Next')", "li.paginate_button.next a"]:
-                        try:
-                            next_button = pagination.find_element(By.CSS_SELECTOR, selector)
-                            if next_button and next_button.is_enabled():
-                                break
-                        except:
-                            continue
-
+                    # Look for next page button
+                    next_button = self.driver.find_element(By.CSS_SELECTOR, "a.next:not(.disabled), li.next:not(.disabled) a, a[rel='next']")
                     if next_button and next_button.is_enabled():
-                        # Scroll to button and click
-                        self.driver.execute_script("arguments[0].scrollIntoView(true);", next_button)
-                        time.sleep(1)
-                        self.driver.execute_script("arguments[0].click();", next_button)
+                        next_button.click()
                         page += 1
-                        # Wait for new content to load
-                        time.sleep(3)
-                        try:
-                            wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "table.table-condensed tbody tr")))
-                        except:
-                            pass
-                        continue
+                        # Wait for new content
+                        wait.until(EC.staleness_of(self.driver.find_element(By.CSS_SELECTOR, "table.table-condensed tbody")))
+                        wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "table.table-condensed tbody tr")))
                     else:
-                        # Check for page numbers as fallback
-                        page_links = pagination.find_elements(By.CSS_SELECTOR, "a")
-                        page_numbers = []
-                        for link in page_links:
-                            try:
-                                num = int(link.text.strip())
-                                page_numbers.append(num)
-                            except:
-                                continue
-
-                        if page_numbers and max(page_numbers) > page:
-                            # Find and click the next page number
-                            next_page = page + 1
-                            next_page_link = None
-                            for link in page_links:
-                                if link.text.strip() == str(next_page):
-                                    next_page_link = link
-                                    break
-                            if next_page_link:
-                                self.driver.execute_script("arguments[0].scrollIntoView(true);", next_page_link)
-                                time.sleep(1)
-                                self.driver.execute_script("arguments[0].click();", next_page_link)
-                                page += 1
-                                time.sleep(3)
-                                continue
-
                         print("No more pages found")
                         break
-
-                except Exception as e:
-                    print(f"Pagination detection error: {e}")
-                    print("Stopping pagination")
+                except Exception:
+                    print("Next button not found, stopping pagination")
                     break
-
             print(f"✅ Total scraped: {len(all_tenders)} tenders from {page} pages")
             return all_tenders
 
@@ -181,7 +130,7 @@ class WorldBankScraper:
     def _scrape_with_requests(self):
         """Fallback method using requests (might get empty data)"""
         import requests
-        from bs4 import BeautifulSoup
+        # from bs4 import BeautifulSoup
 
         try:
             print("⚠️ Using requests fallback (may not get JavaScript-rendered content)...")
@@ -330,23 +279,6 @@ class WorldBankScraper:
 
         return None
 
-    def get_sample_data(self):
-        """Return sample data if scraping fails"""
-        return [
-                {
-                    'id': 1,
-                    'procurement_number': 'WB-2025-001',
-                    'title': 'Sample World Bank Tender - Consultancy Services',
-                    'organization': 'World Bank',
-                    'country': 'Global',
-                    'publication_date': datetime.now().strftime('%Y-%m-%d'),
-                    'deadline': datetime.now().strftime('%Y-%m-%d'),
-                    'detail_url': self.base_url,
-                    'source': 'worldbank',
-                    'scraped_at': datetime.now().isoformat()
-                    }
-                ]
-
     def scrape(self):
         """Main scrape method - tries Selenium first, falls back to requests"""
         if self.use_selenium:
@@ -369,12 +301,4 @@ class WorldBankScraper:
 
         return data
 
-    def filter_by_country(self, country):
-        """Filter scraped tenders by country"""
-        # This would need to be implemented if you want to filter results
-        pass
-
-    def get_active_deadlines(self):
-        """Get tenders with upcoming deadlines"""
-        # This would need to be implemented
-        pass
+    # ... rest of your methods (filter_by_country, get_active_deadlines, etc.) ...
