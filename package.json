@@ -12,15 +12,18 @@
     "recharts": "^2.9.0",
     "xlsx": "^0.18.5"
   },
- "scripts": {
+  "scripts": {
     "start": "react-scripts start",
-    "start:backend": "cd backend && set FLASK_DEBUG=0 && set PYTHONIOENCODING=utf-8 && .\\venv\\Scripts\\python run.py",
+    "start:backend": "cd backend && .\\venv\\Scripts\\python run.py",
+    "start:backend-prod": "cd backend && set FLASK_ENV=production && .\\venv\\Scripts\\python run_production.py",
     "dev": "concurrently \"npm run start:backend\" \"npm start\"",
     "build": "react-scripts build",
     "build-only": "react-scripts build",
-    "serve-frontend": "npx serve -s build -l tcp://0.0.0.0:3000",
-    "serve-backend": "npm run start:backend",
-    "serve": "concurrently \"npm run serve-backend\" \"npm run serve-frontend\""
+    "serve-frontend": "serve -s build -l 3000",
+    "serve-backend": "cd backend && .\\venv\\Scripts\\python run.py",
+    "serve": "concurrently \"npm run serve-backend\" \"npm run serve-frontend\"",
+    "serve-prod": "concurrently \"npm run start:backend-prod\" \"npm run serve-frontend\"",
+    "stop": "taskkill /F /IM python.exe /IM node.exe"
   },
   "browserslist": {
     "production": [
