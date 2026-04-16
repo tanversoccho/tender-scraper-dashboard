@@ -4,13 +4,17 @@ import StatsGrid from './components/StatsGrid';
 import TabNavigation from './components/TabNavigation';
 import DynamicTab from './components/DynamicTab';
 import Footer from './components/Footer';
+import FilterBar from './components/FilterBar';
 import { FiRefreshCw, FiAlertCircle, FiDownload } from 'react-icons/fi';
 import axios from 'axios';
 import DataExportPage from './pages/DataExportPage';
+import { FilterProvider, useFilters } from './contexts/FilterContext';
+import { torService } from './services/torService';
+import { memoryService } from './services/memoryService';
 
 const API_BASE_URL = 'http://localhost:5000/api';
 
-// Rosé Pine color palette - MOVED OUTSIDE COMPONENT
+// Rosé Pine color palette
 const colors = {
   base: '#191724',
   surface: '#1f1d2e',
@@ -24,16 +28,40 @@ const colors = {
   overlay: '#26233a'
 };
 
-function App() {
+// Main App Content with filters
+function AppContent() {
+  const { generalFilters, activeMode, applyFilters } = useFilters();
   const [activeTab, setActiveTab] = useState('');
   const [scrapers, setScrapers] = useState([]);
   const [tenderData, setTenderData] = useState({});
+  const [filteredData, setFilteredData] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [lastUpdated, setLastUpdated] = useState(new Date());
   const [apiStatus, setApiStatus] = useState('checking');
   const [initialized, setInitialized] = useState(false);
   const [showExportPage, setShowExportPage] = useState(false);
+
+  // Apply filters to data whenever they change
+  useEffect(() => {
+    if (Object.keys(tenderData).length === 0) return;
+    
+    console.log('Applying filters to dashboard data...');
+    const filtered = {};
+    
+    Object.keys(tenderData).forEach(source => {
+      if (Array.isArray(tenderData[source])) {
+        // Apply filters to each source's tenders
+        filtered[source] = applyFilters(
+          tenderData[source].map(item => ({ ...item, source })),
+          torService,
+          memoryService
+        );
+      }
+    });
+    
+    setFilteredData(filtered);
+  }, [tenderData, generalFilters, activeMode, applyFilters]);
 
   // Check API health on mount
   useEffect(() => {
@@ -97,7 +125,8 @@ function App() {
         { name: 'undp', display_name: 'UNDP' },
         { name: 'ungm', display_name: 'UNGM/UNOPS' },
         { name: 'worldbank', display_name: 'WORLD BANK' },
-        { name: 'bppa', display_name: 'BPPA' }
+        { name: 'bppa', display_name: 'BPPA' },
+        { name: 'adb', display_name: 'ADB' }
       ];
       setScrapers(defaultScrapers);
       setActiveTab('bdjobs');
@@ -141,24 +170,29 @@ function App() {
       bdjobs: [
         {
           id: 1,
+          source: 'bdjobs',
           organization: "World Bank",
           title: "Consultant for Digital Transformation Project",
           link: "#",
           logo: "https://via.placeholder.com/60x60?text=WB",
-          posted: "2024-12-20"
+          posted: "2024-12-20",
+          deadline: "2025-01-15"
         },
         {
           id: 2,
+          source: 'bdjobs',
           organization: "UNDP Bangladesh",
           title: "Supply and Installation of IT Equipment",
           link: "#",
           logo: "https://via.placeholder.com/60x60?text=UNDP",
-          posted: "2024-12-19"
+          posted: "2024-12-19",
+          deadline: "2025-01-10"
         }
       ],
       care: [
         {
           id: 1,
+          source: 'care',
           deadline: "25 Dec 2024",
           title: "Project Manager - Food Security",
           download_url: "#",
@@ -168,12 +202,14 @@ function App() {
       pksf: [
         {
           id: 1,
+          source: 'pksf',
           date: "15 Dec 2024",
           title: "Procurement of Office Equipment",
           link: "#",
           views: "234",
           likes: "12",
-          author: "PKSF Admin"
+          author: "PKSF Admin",
+          deadline: "2025-01-20"
         }
       ],
       undp: [],
@@ -189,6 +225,17 @@ function App() {
           publication_date: "15/02/2026",
           closing_date: "02/03/2026",
           place: "Dhaka"
+        }
+      ],
+      adb: [
+        {
+          id: 1,
+          source: 'adb',
+          project_name: "South Asia Subregional Economic Cooperation Highway Improvement Project",
+          country: "Bangladesh",
+          status: "Active",
+          deadline: "2025-03-30",
+          amount: "250000000"
         }
       ]
     };
@@ -206,50 +253,61 @@ function App() {
     checkApiHealth();
   };
 
+  // Get unique sources from data for filter bar
+  const getAvailableSources = () => {
+    const sources = new Set();
+    Object.keys(tenderData).forEach(source => {
+      if (Array.isArray(tenderData[source]) && tenderData[source].length > 0) {
+        sources.add(source);
+      }
+    });
+    return Array.from(sources);
+  };
+
   // Show loading state
   if (loading && !initialized) {
     return (
       <div className="app" style={{ background: colors.base, minHeight: '100vh' }}>
-      <div className="loading-screen" style={{
-        display: 'flex',
+        <div className="loading-screen" style={{
+          display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
           height: '100vh',
           background: colors.base
-      }}>
-      <div className="loading-spinner" style={{
-        width: '50px',
-          height: '50px',
-          border: `3px solid ${colors.rose}30`,
-          borderRadius: '50%',
-          borderTopColor: colors.rose,
-          animation: 'spin 1s ease-in-out infinite'
-      }}></div>
-      <div style={{ marginTop: '20px', color: colors.text, fontFamily: 'Fira Code, monospace' }}>
-      Loading tender dashboard...
-      </div>
-      {apiStatus === 'disconnected' && (
-        <div style={{ marginTop: '20px', textAlign: 'center' }}>
-        <p style={{ color: colors.gold }}>⚠️ Backend server not running</p>
-        <button
-        onClick={handleRetryConnection}
-        style={{
-          marginTop: '10px',
-            padding: '10px 20px',
-            background: colors.pine,
-            color: colors.text,
-            border: 'none',
-            borderRadius: '5px',
-            cursor: 'pointer',
-            fontFamily: 'Fira Code, monospace'
-        }}
-        >
-        Retry Connection
-        </button>
+        }}>
+          <div className="loading-spinner" style={{
+            width: '50px',
+            height: '50px',
+            border: `3px solid ${colors.rose}30`,
+            borderRadius: '50%',
+            borderTopColor: colors.rose,
+            animation: 'spin 1s ease-in-out infinite'
+          }}></div>
+          <div style={{ marginTop: '20px', color: colors.text, fontFamily: 'Fira Code, monospace' }}>
+            Loading tender dashboard...
+          </div>
+          {apiStatus === 'disconnected' && (
+            <div style={{ marginTop: '20px', textAlign: 'center' }}>
+              <p style={{ color: colors.gold }}>⚠️ Backend server not running</p>
+              <button
+                onClick={handleRetryConnection}
+                style={{
+                  marginTop: '10px',
+                  padding: '10px 20px',
+                  background: colors.pine,
+                  color: colors.text,
+                  border: 'none',
+                  borderRadius: '5px',
+                  cursor: 'pointer',
+                  fontFamily: 'Fira Code, monospace'
+                }}
+              >
+                Retry Connection
+              </button>
+            </div>
+          )}
         </div>
-      )}
-      </div>
       </div>
     );
   }
@@ -262,148 +320,157 @@ function App() {
   // Main dashboard view
   return (
     <div className="app" style={{ background: colors.base, minHeight: '100vh' }}>
-    <div className="container">
-    {apiStatus === 'disconnected' && (
-      <div className="warning-banner" style={{
-        background: colors.gold,
-          color: colors.base,
-          padding: '10px',
-          margin: '10px 0',
-          borderRadius: '5px',
+      <div className="container">
+        {apiStatus === 'disconnected' && (
+          <div className="warning-banner" style={{
+            background: colors.gold,
+            color: colors.base,
+            padding: '10px',
+            margin: '10px 0',
+            borderRadius: '5px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '10px',
+            fontFamily: 'Fira Code, monospace'
+          }}>
+            <FiAlertCircle />
+            <span>Backend server is not running. Please start it with 'cd backend && python run.py'</span>
+            <button
+              onClick={handleRetryConnection}
+              style={{
+                marginLeft: 'auto',
+                padding: '5px 10px',
+                background: colors.base,
+                color: colors.gold,
+                border: 'none',
+                borderRadius: '3px',
+                cursor: 'pointer',
+                fontFamily: 'Fira Code, monospace'
+              }}
+            >
+              Retry
+            </button>
+          </div>
+        )}
+
+        {error && (
+          <div className="error" style={{
+            background: colors.love,
+            color: colors.base,
+            padding: '10px',
+            margin: '10px 0',
+            borderRadius: '5px',
+            fontFamily: 'Fira Code, monospace'
+          }}>
+            {error}
+          </div>
+        )}
+
+        {/* Export Button and Filter Toggle */}
+        <div style={{
           display: 'flex',
-          alignItems: 'center',
-          gap: '10px',
-          fontFamily: 'Fira Code, monospace'
-      }}>
-      <FiAlertCircle />
-      <span>Backend server is not running. Please start it with 'cd backend && python run.py'</span>
-      <button
-      onClick={handleRetryConnection}
-      style={{
-        marginLeft: 'auto',
-          padding: '5px 10px',
-          background: colors.base,
-          color: colors.gold,
-          border: 'none',
-          borderRadius: '3px',
-          cursor: 'pointer',
-          fontFamily: 'Fira Code, monospace'
-      }}
-      >
-      Retry
-      </button>
+          justifyContent: 'space-between',
+          marginBottom: '20px',
+          gap: '10px'
+        }}>
+          <div style={{ flex: 1 }}>
+            {/* Filter Bar Component */}
+            <FilterBar 
+              sources={getAvailableSources()} 
+              showStatusFilter={true}
+            />
+          </div>
+          <button
+            onClick={() => setShowExportPage(true)}
+            style={{
+              padding: '10px 20px',
+              background: colors.pine,
+              color: colors.text,
+              border: 'none',
+              borderRadius: '5px',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '5px',
+              fontFamily: 'Fira Code, monospace',
+              transition: 'all 0.3s',
+              height: 'fit-content',
+              marginTop: '30px'
+            }}
+            onMouseEnter={(e) => {
+              e.target.style.background = colors.iris;
+              e.target.style.color = colors.base;
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.background = colors.pine;
+              e.target.style.color = colors.text;
+            }}
+          >
+            <FiDownload /> Export Data
+          </button>
+        </div>
+
+        <StatsGrid
+          scrapers={scrapers}
+          tenderData={filteredData}  // Use filtered data instead of raw data
+          lastUpdated={lastUpdated}
+        />
+
+        <TabNavigation
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+          scrapers={scrapers}
+        />
+
+        {activeTab && (
+          <DynamicTab
+            scraperName={activeTab}
+            displayName={scrapers.find(s => s.name === activeTab)?.display_name || activeTab}
+            data={filteredData[activeTab] || []}  // Use filtered data
+          />
+        )}
+
+        <Footer lastUpdated={lastUpdated} />
+
+        <button
+          className="refresh-btn"
+          onClick={handleRefresh}
+          disabled={loading}
+          style={{
+            position: 'fixed',
+            bottom: '20px',
+            right: '20px',
+            padding: '10px 20px',
+            background: colors.pine,
+            color: colors.text,
+            border: 'none',
+            borderRadius: '5px',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '5px',
+            fontFamily: 'Fira Code, monospace',
+            boxShadow: `0 5px 15px ${colors.base}80`,
+            transition: 'all 0.3s'
+          }}
+          onMouseEnter={(e) => {
+            e.target.style.background = colors.iris;
+            e.target.style.color = colors.base;
+          }}
+          onMouseLeave={(e) => {
+            e.target.style.background = colors.pine;
+            e.target.style.color = colors.text;
+          }}
+        >
+          <FiRefreshCw style={{ 
+            animation: loading ? 'spin 1s linear infinite' : 'none',
+            color: 'inherit'
+          }} />
+          {loading ? 'Refreshing...' : 'Refresh Data'}
+        </button>
       </div>
-    )}
 
-    {error && (
-      <div className="error" style={{
-        background: colors.love,
-          color: colors.base,
-          padding: '10px',
-          margin: '10px 0',
-          borderRadius: '5px',
-          fontFamily: 'Fira Code, monospace'
-      }}>
-      {error}
-      </div>
-    )}
-
-    {/* Export Button */}
-    <div style={{
-      display: 'flex',
-        justifyContent: 'flex-end',
-        marginBottom: '20px',
-        gap: '10px'
-    }}>
-    <button
-    onClick={() => setShowExportPage(true)}
-    style={{
-      padding: '10px 20px',
-        background: colors.pine,
-        color: colors.text,
-        border: 'none',
-        borderRadius: '5px',
-        cursor: 'pointer',
-        display: 'flex',
-        alignItems: 'center',
-        gap: '5px',
-        fontFamily: 'Fira Code, monospace',
-        transition: 'all 0.3s'
-    }}
-    onMouseEnter={(e) => {
-      e.target.style.background = colors.iris;
-      e.target.style.color = colors.base;
-    }}
-    onMouseLeave={(e) => {
-      e.target.style.background = colors.pine;
-      e.target.style.color = colors.text;
-    }}
-    >
-    <FiDownload /> Export Data
-    </button>
-    </div>
-
-    <StatsGrid
-    scrapers={scrapers}
-    tenderData={tenderData}
-    lastUpdated={lastUpdated}
-    />
-
-    <TabNavigation
-    activeTab={activeTab}
-    setActiveTab={setActiveTab}
-    scrapers={scrapers}
-    />
-
-    {activeTab && (
-      <DynamicTab
-      scraperName={activeTab}
-      displayName={scrapers.find(s => s.name === activeTab)?.display_name || activeTab}
-      data={tenderData[activeTab] || []}
-      />
-    )}
-
-    <Footer lastUpdated={lastUpdated} />
-
-    <button
-    className="refresh-btn"
-    onClick={handleRefresh}
-    disabled={loading}
-    style={{
-      position: 'fixed',
-        bottom: '20px',
-        right: '20px',
-        padding: '10px 20px',
-        background: colors.pine,
-        color: colors.text,
-        border: 'none',
-        borderRadius: '5px',
-        cursor: 'pointer',
-        display: 'flex',
-        alignItems: 'center',
-        gap: '5px',
-        fontFamily: 'Fira Code, monospace',
-        boxShadow: `0 5px 15px ${colors.base}80`,
-        transition: 'all 0.3s'
-    }}
-    onMouseEnter={(e) => {
-      e.target.style.background = colors.iris;
-      e.target.style.color = colors.base;
-    }}
-    onMouseLeave={(e) => {
-      e.target.style.background = colors.pine;
-      e.target.style.color = colors.text;
-    }}
-    >
-    <FiRefreshCw style={{ 
-      animation: loading ? 'spin 1s linear infinite' : 'none',
-        color: 'inherit'
-    }} />
-    {loading ? 'Refreshing...' : 'Refresh Data'}
-    </button>
-    </div>
-
-    <style>{`
+      <style>{`
         @keyframes spin {
           to { transform: rotate(360deg); }
         }
@@ -412,8 +479,22 @@ function App() {
           margin: 0;
           font-family: 'Fira Code', monospace;
         }
+        .container {
+          max-width: 1400px;
+          margin: 0 auto;
+          padding: 20px;
+        }
       `}</style>
     </div>
+  );
+}
+
+// Main App component wrapped with FilterProvider
+function App() {
+  return (
+    <FilterProvider>
+      <AppContent />
+    </FilterProvider>
   );
 }
 

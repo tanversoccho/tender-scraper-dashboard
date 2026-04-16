@@ -4,11 +4,13 @@ import {
   FiFileText, FiDatabase, FiClock, FiCheckCircle,
   FiSearch, FiDownloadCloud,
   FiEye, FiTable, FiGrid, FiAlertCircle, FiAward,
-  FiStar, FiTrendingUp
+  FiStar, FiTrendingUp, FiArrowLeft
 } from 'react-icons/fi';
 import axios from 'axios';
 import moment from 'moment';
 import * as XLSX from 'xlsx';
+import { useFilters } from '../contexts/FilterContext';
+import FilterBar from '../components/FilterBar';
 import './DataExportPage.css';
 import { torService } from '../services/torService';
 import { memoryService } from '../services/memoryService';
@@ -16,34 +18,27 @@ import { memoryService } from '../services/memoryService';
 const API_BASE_URL = 'http://localhost:5000/api';
 
 const DataExportPage = ({ onClose }) => {
+  const {
+    generalFilters,
+    torFilters,
+    activeMode,
+    setActiveMode,
+    applyFilters,
+    resetFilters
+  } = useFilters();
+
   const [tenderData, setTenderData] = useState({});
   const [downloadHistory, setDownloadHistory] = useState([]);
   const [loading, setLoading] = useState(true);
   const [downloading, setDownloading] = useState(false);
   const [previewData, setPreviewData] = useState([]);
   const [previewType, setPreviewType] = useState('table');
-  const [activeTab, setActiveTab] = useState('all'); // 'all' or 'tor'
-
-  const [torFilters, setTorFilters] = useState({
-    documentType: 'all',
-    showOnlyNew: false,
-    showTorOnly: true,
-    minKeywords: 1,
-    selectedKeywords: []
-  });
+  const [filteredTenders, setFilteredTenders] = useState([]);
 
   const [memoryStats, setMemoryStats] = useState({
     totalSeen: 0,
     newInCurrent: 0,
     todaysNew: 0
-  });
-
-  const [filters, setFilters] = useState({
-    source: 'all',
-    dateFrom: '',
-    dateTo: '',
-    searchTerm: '',
-    status: 'all'
   });
 
   const [stats, setStats] = useState({
@@ -56,7 +51,7 @@ const DataExportPage = ({ onClose }) => {
   });
 
   useEffect(() => {
-    const stats = memoryService.getStats();
+    const statsData = memoryService.getStats();
     let todaysNew = 0;
 
     if (memoryService.getTodaysNew && typeof memoryService.getTodaysNew === 'function') {
@@ -64,7 +59,7 @@ const DataExportPage = ({ onClose }) => {
     }
 
     setMemoryStats({
-      totalSeen: stats.totalSeen,
+      totalSeen: statsData.totalSeen,
       newInCurrent: 0,
       todaysNew: todaysNew
     });
@@ -77,7 +72,7 @@ const DataExportPage = ({ onClose }) => {
 
   useEffect(() => {
     updatePreview();
-  }, [filters, torFilters, tenderData, activeTab]);
+  }, [generalFilters, torFilters, tenderData, activeMode]);
 
   const fetchData = async () => {
     try {
@@ -118,7 +113,7 @@ const DataExportPage = ({ onClose }) => {
     let allTenders = [];
     Object.keys(data).forEach(source => {
       if (Array.isArray(data[source])) {
-        allTenders = [...allTenders, ...data[source]];
+        allTenders = [...allTenders, ...data[source].map(item => ({ ...item, source }))];
       }
     });
     return allTenders;
@@ -133,7 +128,9 @@ const DataExportPage = ({ onClose }) => {
 
   const updatePreview = () => {
     const allTenders = flattenTenders(tenderData);
-    const filtered = applyAllFilters(allTenders);
+    const filtered = applyFilters(allTenders, torService, memoryService);
+    setFilteredTenders(filtered);
+    
     const preview = prepareDataForPreview(filtered);
     setPreviewData(preview);
 
@@ -145,80 +142,6 @@ const DataExportPage = ({ onClose }) => {
       ...prev,
       newInCurrent: newInView
     }));
-  };
-
-  const applyAllFilters = (tenders) => {
-    let filtered = applyGeneralFilters(tenders);
-    if (activeTab === 'tor') {
-      filtered = applyTorFilters(filtered);
-    }
-    return filtered;
-  };
-
-  const applyGeneralFilters = (tenders) => {
-    return tenders.filter(tender => {
-      if (filters.source !== 'all' && tender.source !== filters.source) return false;
-
-      if (filters.searchTerm) {
-        const searchLower = filters.searchTerm.toLowerCase();
-        const titleMatch = tender.title?.toLowerCase().includes(searchLower);
-        const refMatch = tender.reference_no?.toLowerCase().includes(searchLower) ||
-          tender.ref_no?.toLowerCase().includes(searchLower) ||
-          tender.project_id?.toLowerCase().includes(searchLower);
-        const orgMatch = tender.organization?.toLowerCase().includes(searchLower) ||
-          tender.procuring_entity?.toLowerCase().includes(searchLower);
-
-        if (!titleMatch && !refMatch && !orgMatch) return false;
-      }
-
-      const tenderDate = tender.publication_date || tender.posted || tender.date;
-      if (filters.dateFrom && tenderDate) {
-        if (moment(tenderDate, ['DD/MM/YYYY', 'YYYY-MM-DD']).isBefore(moment(filters.dateFrom))) return false;
-      }
-      if (filters.dateTo && tenderDate) {
-        if (moment(tenderDate, ['DD/MM/YYYY', 'YYYY-MM-DD']).isAfter(moment(filters.dateTo))) return false;
-      }
-
-      if (filters.status !== 'all') {
-        if (filters.status === 'active' && tender.status?.toLowerCase() !== 'active') return false;
-        if (filters.status === 'closed' && tender.status?.toLowerCase() === 'active') return false;
-      }
-
-      return true;
-    });
-  };
-
-  const applyTorFilters = (tenders) => {
-    let filtered = [...tenders];
-
-    if (torFilters.showTorOnly) {
-      filtered = filtered.filter(t => torService.isTorRelevant(t));
-    }
-
-    if (torFilters.documentType !== 'all') {
-      filtered = filtered.filter(t =>
-        torService.detectDocumentType(t) === torFilters.documentType
-      );
-    }
-
-    if (torFilters.showOnlyNew) {
-      filtered = memoryService.getNewTenders(filtered);
-    }
-
-    if (torFilters.minKeywords > 0) {
-      filtered = filtered.filter(t =>
-        torService.getMatchingKeywords(t).length >= torFilters.minKeywords
-      );
-    }
-
-    if (torFilters.selectedKeywords.length > 0) {
-      filtered = filtered.filter(t => {
-        const keywords = torService.getMatchingKeywords(t);
-        return torFilters.selectedKeywords.some(k => keywords.includes(k));
-      });
-    }
-
-    return filtered;
   };
 
   const prepareDataForPreview = (tenders) => {
@@ -242,9 +165,6 @@ const DataExportPage = ({ onClose }) => {
   };
 
   const prepareDataForTorExport = () => {
-    const allTenders = flattenTenders(tenderData);
-    const filteredTenders = applyAllFilters(allTenders);
-
     return filteredTenders.map((tender, index) => {
       const keywords = torService.getMatchingKeywords(tender);
       const isNew = memoryService.isNew(tender.link || tender.detail_url || tender.url);
@@ -269,9 +189,6 @@ const DataExportPage = ({ onClose }) => {
   };
 
   const prepareDataForLegacyExport = () => {
-    const allTenders = flattenTenders(tenderData);
-    const filteredTenders = applyGeneralFilters(allTenders);
-
     return filteredTenders.map((tender, index) => ({
       'SL No': index + 1,
       'Source': tender.source?.toUpperCase() || 'N/A',
@@ -292,7 +209,7 @@ const DataExportPage = ({ onClose }) => {
     try {
       setDownloading(true);
 
-      const exportData = activeTab === 'tor'
+      const exportData = activeMode === 'tor'
         ? prepareDataForTorExport()
         : prepareDataForLegacyExport();
 
@@ -313,22 +230,19 @@ const DataExportPage = ({ onClose }) => {
         ws['!cols'] = colWidths;
       }
 
-      XLSX.utils.book_append_sheet(wb, ws, activeTab === 'tor' ? 'ToR Opportunities' : 'All Tenders');
+      XLSX.utils.book_append_sheet(wb, ws, activeMode === 'tor' ? 'ToR Opportunities' : 'All Tenders');
 
       const timestamp = moment().format('YYYY-MM-DD_HH-mm');
-      const prefix = activeTab === 'tor' ? 'Bangladesh_ToR_Report' : 'tenders';
+      const prefix = activeMode === 'tor' ? 'Bangladesh_ToR_Report' : 'tenders';
       const filename = `${prefix}_${timestamp}.xlsx`;
 
       XLSX.writeFile(wb, filename);
 
-      if (activeTab === 'tor') {
-        const exportedTenders = flattenTenders(tenderData).filter(t =>
-          applyAllFilters([t]).length > 0
-        );
-        memoryService.markMultipleAsSeen(exportedTenders);
+      if (activeMode === 'tor') {
+        memoryService.markMultipleAsSeen(filteredTenders);
       }
 
-      saveToHistory(filename, { ...filters, ...torFilters, mode: activeTab }, exportData.length);
+      saveToHistory(filename, { mode: activeMode }, exportData.length);
 
     } catch (error) {
       console.error('Error downloading Excel:', error);
@@ -366,7 +280,7 @@ const DataExportPage = ({ onClose }) => {
       link.download = filename;
       link.click();
 
-      saveToHistory(filename, filters, exportData.length);
+      saveToHistory(filename, { mode: 'all' }, exportData.length);
 
     } catch (error) {
       console.error('Error downloading CSV:', error);
@@ -395,26 +309,8 @@ const DataExportPage = ({ onClose }) => {
     }));
   };
 
-  const clearFilters = () => {
-    setFilters({
-      source: 'all',
-      dateFrom: '',
-      dateTo: '',
-      searchTerm: '',
-      status: 'all'
-    });
-    setTorFilters({
-      documentType: 'all',
-      showOnlyNew: false,
-      showTorOnly: true,
-      minKeywords: 1,
-      selectedKeywords: []
-    });
-  };
-
   const getFilteredCount = () => {
-    const allTenders = flattenTenders(tenderData);
-    return applyAllFilters(allTenders).length;
+    return filteredTenders.length;
   };
 
   const generateDailyDigest = () => {
@@ -431,459 +327,275 @@ const DataExportPage = ({ onClose }) => {
       byType[type] = (byType[type] || 0) + 1;
     });
 
-    const digestMessage = `
-📅 **DAILY DIGEST REPORT - ${moment().format('MMMM D, YYYY')}**
+    const digestMessage = `📅 DAILY DIGEST REPORT - ${moment().format('MMMM D, YYYY')}
 
-🔍 **Overview**
+🔍 Overview
 • New opportunities today: ${todaysNew.length}
 • ToR-relevant opportunities: ${torOpportunities.length}
 • Sites scanned: ${stats.uniqueSources}
 
-📌 **By Document Type**
-      ${Object.entries(byType).map(([type, count]) => `  • ${type}: ${count}`).join('\n')}
+📌 By Document Type
+${Object.entries(byType).map(([type, count]) => `  • ${type}: ${count}`).join('\n')}
 
-📊 **Top Opportunities**
-      ${torOpportunities.slice(0, 5).map((t, i) =>
-        `  ${i+1}. ${t.title?.substring(0, 60)}... (${torService.detectDocumentType(t)})`
+📊 Top Opportunities
+${torOpportunities.slice(0, 5).map((t, i) =>
+        `  ${i + 1}. ${t.title?.substring(0, 60)}... (${torService.detectDocumentType(t)})`
       ).join('\n')}
 
-✅ **Export ready**: ${torOpportunities.length} opportunities available for download
-    `;
+✅ Export ready: ${torOpportunities.length} opportunities available for download`;
 
     alert(digestMessage);
   };
 
-  const sources = ['all', ...new Set(flattenTenders(tenderData).map(t => t.source))];
-  const allKeywords = torService.TOR_KEYWORDS;
+  const getAvailableSources = () => {
+    const sources = new Set();
+    Object.keys(tenderData).forEach(source => {
+      if (Array.isArray(tenderData[source]) && tenderData[source].length > 0) {
+        sources.add(source);
+      }
+    });
+    return Array.from(sources);
+  };
+
+  if (loading) {
+    return (
+      <div className="data-export-page">
+        <div className="export-container">
+          <div className="loading-spinner">Loading data...</div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="data-export-page">
-    <div className="export-container">
-    {/* Back Button */}
-    <div className="back-button">
-    <button className="back-btn" onClick={onClose}>
-    ← Back to Dashboard
-    </button>
-    </div>
-
-    {/* Header with Tabs */}
-    <div className="export-header">
-    <div>
-    <h1 className="header-title">
-    <FiDatabase className="header-icon" /> Data Export Center
-    </h1>
-    <p className="header-subtitle">
-    Export tender data in Excel format with filtering options
-    </p>
-    </div>
-    <div className="header-actions">
-    <button className="digest-btn" onClick={generateDailyDigest}>
-    <FiAlertCircle /> Daily Digest
-    </button>
-    <button className="refresh-btn" onClick={fetchData}>
-    <FiRefreshCw /> Refresh Data
-    </button>
-    </div>
-    </div>
-
-    {/* Mode Tabs */}
-    <div className="mode-tabs">
-    <button
-    className={`mode-tab ${activeTab === 'all' ? 'active-all' : ''}`}
-    onClick={() => setActiveTab('all')}
-    >
-    <FiDatabase /> All Tenders
-    </button>
-    <button
-    className={`mode-tab ${activeTab === 'tor' ? 'active-tor' : ''}`}
-    onClick={() => setActiveTab('tor')}
-    >
-    <FiAward /> ToR Monitor
-    </button>
-    </div>
-
-    {/* Stats Cards */}
-    <div className="stats-cards">
-    <div className="stat-card rose">
-    <div className="stat-label">Total Tenders</div>
-    <div className="stat-value">{stats.totalTenders}</div>
-    </div>
-
-    <div className="stat-card pine">
-    <div className="stat-label">Sources</div>
-    <div className="stat-value">{stats.uniqueSources}</div>
-    </div>
-
-    <div className="stat-card gold">
-    <div className="stat-label">ToR Opportunities</div>
-    <div className="stat-value">{stats.torOpportunities}</div>
-    </div>
-
-    <div className="stat-card iris">
-    <div className="stat-label">New Today</div>
-    <div className="stat-value">{stats.newToday}</div>
-    </div>
-    </div>
-
-    {/* Memory Stats Bar */}
-    <div className="memory-stats-bar">
-    <span className="memory-stat">
-    <FiStar className="star" /> Total Seen: {memoryStats.totalSeen}
-    </span>
-    <span className="memory-stat">
-    <FiTrendingUp className="trending" /> New in View: {memoryStats.newInCurrent}
-    </span>
-    <span className="memory-stat">
-    <FiAlertCircle className="alert" /> Today's New: {memoryStats.todaysNew}
-    </span>
-    </div>
-
-    {/* Filter Section */}
-    <div className="filter-section">
-    <h3 className="filter-title">
-    <FiFilter className="filter-icon" /> {activeTab === 'tor' ? 'ToR Monitor Filters' : 'General Filters'}
-    </h3>
-
-    <div className="filter-grid">
-    {/* Source Filter */}
-    <div>
-    <label className="filter-label">Source</label>
-    <select
-    className="filter-select"
-    value={filters.source}
-    onChange={(e) => setFilters({ ...filters, source: e.target.value })}
-    >
-    {sources.map(source => (
-      <option key={source} value={source}>
-      {source === 'all' ? 'All Sources' : source.toUpperCase()}
-      </option>
-    ))}
-    </select>
-    </div>
-
-    {/* Search Term */}
-    <div>
-    <label className="filter-label">Search</label>
-    <div className="search-wrapper">
-    <FiSearch className="search-icon" />
-    <input
-    type="text"
-    className="search-input"
-    value={filters.searchTerm}
-    onChange={(e) => setFilters({ ...filters, searchTerm: e.target.value })}
-    placeholder="Search titles, refs..."
-    />
-    </div>
-    </div>
-
-    <div>
-    <label className="filter-label">From Date</label>
-    <input
-    type="date"
-    className="filter-input"
-    value={filters.dateFrom}
-    onChange={(e) => setFilters({ ...filters, dateFrom: e.target.value })}
-    />
-    </div>
-
-    <div>
-    <label className="filter-label">To Date</label>
-    <input
-    type="date"
-    className="filter-input"
-    value={filters.dateTo}
-    onChange={(e) => setFilters({ ...filters, dateTo: e.target.value })}
-    />
-    </div>
-
-    <div>
-    <label className="filter-label">Status</label>
-    <select
-    className="filter-select"
-    value={filters.status}
-    onChange={(e) => setFilters({ ...filters, status: e.target.value })}
-    >
-    <option value="all">All Status</option>
-    <option value="active">Active</option>
-    <option value="closed">Closed</option>
-    </select>
-    </div>
-    </div>
-
-    {activeTab === 'tor' && (
-      <div className="tor-filters">
-      <h4>📋 ToR Specific Filters</h4>
-
-      <div className="filter-grid">
-      <div>
-      <label className="filter-label">Document Type</label>
-      <select
-      className="filter-select"
-      value={torFilters.documentType}
-      onChange={(e) => setTorFilters({ ...torFilters, documentType: e.target.value })}
-      >
-      <option value="all">All Types</option>
-      <option value="ToR">📋 ToR (Terms of Reference)</option>
-      <option value="RFP">📄 RFP (Request for Proposal)</option>
-      <option value="EOI">✉️ EOI (Expression of Interest)</option>
-      <option value="RFQ">💰 RFQ (Request for Quotation)</option>
-      </select>
-      </div>
-
-      <div>
-      <label className="filter-label">Minimum Keywords</label>
-      <select
-      className="filter-select"
-      value={torFilters.minKeywords}
-      onChange={(e) => setTorFilters({ ...torFilters, minKeywords: parseInt(e.target.value) })}
-      >
-      <option value="0">Any keywords</option>
-      <option value="1">At least 1 keyword</option>
-      <option value="2">At least 2 keywords</option>
-      <option value="3">3+ keywords</option>
-      </select>
-      </div>
-
-      <div className="checkbox-group">
-      <label className="checkbox-label">
-      <input
-      type="checkbox"
-      checked={torFilters.showTorOnly}
-      onChange={(e) => setTorFilters({ ...torFilters, showTorOnly: e.target.checked })}
-      />
-      Show only ToR-relevant
-      </label>
-
-      <label className="checkbox-label">
-      <input
-      type="checkbox"
-      checked={torFilters.showOnlyNew}
-      onChange={(e) => setTorFilters({ ...torFilters, showOnlyNew: e.target.checked })}
-      />
-      Show only NEW
-      </label>
-      </div>
-
-      <div style={{ gridColumn: 'span 2' }}>
-      <label className="filter-label">Filter by Keywords</label>
-      <select
-      className="filter-select"
-      multiple
-      size="3"
-      value={torFilters.selectedKeywords}
-      onChange={(e) => {
-        const options = Array.from(e.target.selectedOptions, option => option.value);
-        setTorFilters({ ...torFilters, selectedKeywords: options });
-      }}
-      >
-      {allKeywords.map(keyword => (
-        <option key={keyword} value={keyword}>{keyword}</option>
-      ))}
-      </select>
-      <small className="filter-hint">Ctrl+click to select multiple</small>
-      </div>
-      </div>
-
-      <div className="preset-buttons">
-      <button
-      className="preset-btn pine"
-      onClick={() => {
-        setTorFilters({
-          documentType: 'ToR',
-          showTorOnly: true,
-          showOnlyNew: true,
-          minKeywords: 1,
-          selectedKeywords: []
-        });
-      }}
-      >
-      🔍 New ToRs Only
-      </button>
-
-      <button
-      className="preset-btn iris"
-      onClick={() => {
-        setTorFilters({
-          documentType: 'all',
-          showTorOnly: true,
-          showOnlyNew: false,
-          minKeywords: 2,
-          selectedKeywords: []
-        });
-      }}
-      >
-      📊 High Relevance (2+ keywords)
-      </button>
-
-      <button
-      className="preset-btn outline"
-      onClick={clearFilters}
-      >
-      🧹 Reset All
-      </button>
-      </div>
-      </div>
-    )}
-
-    <div className="filter-actions">
-    <button className="clear-filters-btn" onClick={clearFilters}>
-    Clear All Filters
-    </button>
-    </div>
-    </div>
-
-    <div className="preview-controls">
-    <div className="preview-info">
-    <FiEye className="preview-icon" />
-    <span className="preview-text">
-    Live Preview ({previewData.length} items
-      {memoryStats.newInCurrent > 0 && `, ${memoryStats.newInCurrent} new`})
-    </span>
-    </div>
-    <div className="view-toggle">
-    <button
-    className={`view-btn ${previewType === 'table' ? 'active' : ''}`}
-    onClick={() => setPreviewType('table')}
-    >
-    <FiTable /> Table
-    </button>
-    <button
-    className={`view-btn ${previewType === 'grid' ? 'active' : ''}`}
-    onClick={() => setPreviewType('grid')}
-    >
-    <FiGrid /> Grid
-    </button>
-    </div>
-    </div>
-
-    <div className="preview-container">
-    {previewData.length > 0 ? (
-      <>
-      {previewType === 'table' ? (
-        <table className="preview-table">
-        <thead>
-        <tr>
-        {Object.keys(previewData[0]).map(key => (
-          <th key={key}>{key}</th>
-        ))}
-        </tr>
-        </thead>
-        <tbody>
-        {previewData.map((row, idx) => (
-          <tr key={idx}>
-          {Object.values(row).map((value, i) => (
-            <td key={i}>{value}</td>
-          ))}
-          </tr>
-        ))}
-        </tbody>
-        </table>
-      ) : (
-        <div className="preview-grid">
-        {previewData.map((item, idx) => (
-          <div key={idx} className="preview-card">
-          {Object.entries(item).map(([key, value]) => (
-            <div key={key} className="preview-field">
-            <span className="preview-field-label">{key}: </span>
-            <span className="preview-field-value">{value}</span>
-            </div>
-          ))}
-          </div>
-        ))}
+      <div className="export-container">
+        {/* Back Button */}
+        <div className="back-button">
+          <button className="back-btn" onClick={onClose}>
+            <FiArrowLeft /> Back to Dashboard
+          </button>
         </div>
-      )}
-      </>
-    ) : (
-      <div className="no-preview-data">
-      No data to preview. Adjust filters to see results.
+
+        {/* Header */}
+        <div className="export-header">
+          <div>
+            <h1 className="header-title">
+              <FiDatabase className="header-icon" /> Data Export Center
+            </h1>
+            <p className="header-subtitle">
+              Export tender data in Excel format with filtering options
+            </p>
+          </div>
+          <div className="header-actions">
+            <button className="digest-btn" onClick={generateDailyDigest}>
+              <FiAlertCircle /> Daily Digest
+            </button>
+            <button className="refresh-btn" onClick={fetchData}>
+              <FiRefreshCw /> Refresh Data
+            </button>
+          </div>
+        </div>
+
+        {/* Stats Cards */}
+        <div className="stats-cards">
+          <div className="stat-card rose">
+            <div className="stat-label">Total Tenders</div>
+            <div className="stat-value">{stats.totalTenders}</div>
+          </div>
+
+          <div className="stat-card pine">
+            <div className="stat-label">Sources</div>
+            <div className="stat-value">{stats.uniqueSources}</div>
+          </div>
+
+          <div className="stat-card gold">
+            <div className="stat-label">ToR Opportunities</div>
+            <div className="stat-value">{stats.torOpportunities}</div>
+          </div>
+
+          <div className="stat-card iris">
+            <div className="stat-label">New Today</div>
+            <div className="stat-value">{stats.newToday}</div>
+          </div>
+        </div>
+
+        {/* Memory Stats Bar */}
+        <div className="memory-stats-bar">
+          <span className="memory-stat">
+            <FiStar className="star" /> Total Seen: {memoryStats.totalSeen}
+          </span>
+          <span className="memory-stat">
+            <FiTrendingUp className="trending" /> New in View: {memoryStats.newInCurrent}
+          </span>
+          <span className="memory-stat">
+            <FiAlertCircle className="alert" /> Today's New: {memoryStats.todaysNew}
+          </span>
+        </div>
+
+        {/* Filter Bar - Shared Component */}
+        <FilterBar 
+          sources={getAvailableSources()} 
+          showStatusFilter={true}
+        />
+
+        {/* Preview Controls */}
+        <div className="preview-controls">
+          <div className="preview-info">
+            <FiEye className="preview-icon" />
+            <span className="preview-text">
+              Live Preview ({previewData.length} items
+              {memoryStats.newInCurrent > 0 && `, ${memoryStats.newInCurrent} new`})
+            </span>
+          </div>
+          <div className="view-toggle">
+            <button
+              className={`view-btn ${previewType === 'table' ? 'active' : ''}`}
+              onClick={() => setPreviewType('table')}
+            >
+              <FiTable /> Table
+            </button>
+            <button
+              className={`view-btn ${previewType === 'grid' ? 'active' : ''}`}
+              onClick={() => setPreviewType('grid')}
+            >
+              <FiGrid /> Grid
+            </button>
+          </div>
+        </div>
+
+        {/* Preview Container */}
+        <div className="preview-container">
+          {previewData.length > 0 ? (
+            <>
+              {previewType === 'table' ? (
+                <table className="preview-table">
+                  <thead>
+                    <tr>
+                      {Object.keys(previewData[0]).map(key => (
+                        <th key={key}>{key}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {previewData.map((row, idx) => (
+                      <tr key={idx}>
+                        {Object.values(row).map((value, i) => (
+                          <td key={i}>{value}</td>
+                        ))}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              ) : (
+                <div className="preview-grid">
+                  {previewData.map((item, idx) => (
+                    <div key={idx} className="preview-card">
+                      {Object.entries(item).map(([key, value]) => (
+                        <div key={key} className="preview-field">
+                          <span className="preview-field-label">{key}: </span>
+                          <span className="preview-field-value">{value}</span>
+                        </div>
+                      ))}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </>
+          ) : (
+            <div className="no-preview-data">
+              <FiAlertCircle size={48} />
+              <p>No data matches the current filters. Adjust your filters to see results.</p>
+            </div>
+          )}
+        </div>
+
+        {previewData.length > 0 && (
+          <div className="pagination-info">
+            <span>Showing {previewData.length} of {getFilteredCount()} total items</span>
+          </div>
+        )}
+
+        {/* Export Actions */}
+        <div className="export-actions">
+          <button
+            className="export-excel-btn"
+            onClick={downloadAsExcel}
+            disabled={downloading || getFilteredCount() === 0}
+          >
+            {downloading ? <FiRefreshCw className="spin" /> : <FiDownload />}
+            {downloading ? 'Generating...' :
+              activeMode === 'tor'
+                ? `📊 Export ToR Report (${getFilteredCount()} items)`
+                : `📥 Download Excel (${getFilteredCount()} items)`}
+          </button>
+
+          {activeMode !== 'tor' && (
+            <button
+              className="export-csv-btn"
+              onClick={downloadAsCSV}
+              disabled={downloading || getFilteredCount() === 0}
+            >
+              <FiFileText /> Download CSV
+            </button>
+          )}
+        </div>
+
+        {/* Download History */}
+        <div className="download-history">
+          <h3 className="history-title">
+            <FiClock className="history-icon" /> Download History
+          </h3>
+
+          {downloadHistory.length > 0 ? (
+            <div className="history-table-wrapper">
+              <table className="history-table">
+                <thead>
+                  <tr>
+                    <th>Filename</th>
+                    <th>Date & Time</th>
+                    <th>Items</th>
+                    <th>Type</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {downloadHistory.map(entry => (
+                    <tr key={entry.id}>
+                      <td className="history-filename">
+                        <FiFileText className="history-file-icon" />
+                        {entry.filename}
+                      </td>
+                      <td className="history-timestamp">
+                        {moment(entry.timestamp).format('YYYY-MM-DD HH:mm:ss')}
+                      </td>
+                      <td className="history-count">
+                        {entry.count} items
+                      </td>
+                      <td className="history-filters">
+                        {entry.filters?.mode === 'tor' ? '📋 ToR Report' : '📊 All Tenders'}
+                      </td>
+                      <td>
+                        <span className="history-status">
+                          <FiCheckCircle /> Success
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className="no-history">
+              <FiDownloadCloud size={48} className="no-history-icon" />
+              <p>No downloads yet. Use the export buttons above to download data.</p>
+              <p className="no-history-note">
+                ToR reports will be saved with the format: Bangladesh_ToR_Report_YYYY-MM-DD.xlsx
+              </p>
+            </div>
+          )}
+        </div>
       </div>
-    )}
-    </div>
-
-    {previewData.length > 0 && (
-      <div className="pagination-info">
-      <span>Showing {previewData.length} of {getFilteredCount()} total items</span>
-      </div>
-    )}
-
-    <div className="export-actions">
-    <button
-    className="export-excel-btn"
-    onClick={downloadAsExcel}
-    disabled={downloading || getFilteredCount() === 0}
-    >
-    {downloading ? <FiRefreshCw className="spin" /> : <FiDownload />}
-    {downloading ? 'Generating...' :
-        activeTab === 'tor'
-        ? `📊 Export ToR Report (${getFilteredCount()} items)`
-        : `📥 Download Excel (${getFilteredCount()} items)`}
-    </button>
-
-    {activeTab !== 'tor' && (
-      <button
-      className="export-csv-btn"
-      onClick={downloadAsCSV}
-      disabled={downloading || getFilteredCount() === 0}
-      >
-      <FiFileText /> Download CSV
-      </button>
-    )}
-    </div>
-
-    <div className="download-history">
-    <h3 className="history-title">
-    <FiClock className="history-icon" /> Download History
-    </h3>
-
-    {downloadHistory.length > 0 ? (
-      <div className="history-table-wrapper">
-      <table className="history-table">
-      <thead>
-      <tr>
-      <th>Filename</th>
-      <th>Date & Time</th>
-      <th>Items</th>
-      <th>Type</th>
-      <th>Status</th>
-      </tr>
-      </thead>
-      <tbody>
-      {downloadHistory.map(entry => (
-        <tr key={entry.id}>
-        <td className="history-filename">
-        <FiFileText className="history-file-icon" />
-        {entry.filename}
-        </td>
-        <td className="history-timestamp">
-        {moment(entry.timestamp).format('YYYY-MM-DD HH:mm:ss')}
-        </td>
-        <td className="history-count">
-        {entry.count} items
-        </td>
-        <td className="history-filters">
-        {entry.filters?.mode === 'tor' ? '📋 ToR Report' : '📊 All Tenders'}
-        </td>
-        <td>
-        <span className="history-status">
-        <FiCheckCircle /> Success
-        </span>
-        </td>
-        </tr>
-      ))}
-      </tbody>
-      </table>
-      </div>
-    ) : (
-      <div className="no-history">
-      <FiDownloadCloud size={48} className="no-history-icon" />
-      <p>No downloads yet. Use the export buttons above to download data.</p>
-      <p className="no-history-note">
-      ToR reports will be saved with the format: Bangladesh_ToR_Report_YYYY-MM-DD.xlsx
-      </p>
-      </div>
-    )}
-    </div>
-    </div>
     </div>
   );
 };
