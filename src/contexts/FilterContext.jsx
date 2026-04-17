@@ -1,4 +1,4 @@
-import React, { createContext, useState, useContext, useEffect } from 'react';
+import { createContext, useState, useContext, useEffect } from 'react';
 import moment from 'moment';
 
 const FilterContext = createContext();
@@ -81,7 +81,7 @@ export const FilterProvider = ({ children }) => {
   // Apply filters to tenders
   const applyFilters = (tenders, torService, memoryService) => {
     if (!tenders || !Array.isArray(tenders)) return [];
-    
+
     let filtered = [...tenders];
 
     // Apply general filters
@@ -163,23 +163,23 @@ export const FilterProvider = ({ children }) => {
     generalFilters,
     torFilters,
     activeMode,
-    
+
     // Setters
     setGeneralFilters,
     setTorFilters,
     setActiveMode,
-    
+
     // Actions
     resetFilters,
     applyFilters,
-    
+
     // Helper
     isTorMode: activeMode === 'tor'
   };
 
   return (
     <FilterContext.Provider value={value}>
-      {children}
+    {children}
     </FilterContext.Provider>
   );
 };

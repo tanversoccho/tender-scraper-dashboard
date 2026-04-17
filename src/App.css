@@ -1,57 +1,177 @@
+/* App.css - All styles moved from inline */
+
+/* Rosé Pine Color Variables */
+:root {
+  --rp-base: #191724;
+  --rp-surface: #1f1d2e;
+  --rp-overlay: #26233a;
+  --rp-muted: #6e6a86;
+  --rp-subtle: #908caa;
+  --rp-text: #e0def4;
+  --rp-love: #eb6f92;
+  --rp-gold: #f6c177;
+  --rp-rose: #ebbcba;
+  --rp-pine: #31748f;
+  --rp-foam: #9ccfd8;
+  --rp-iris: #c4a7e7;
+  --rp-highlight-low: #21202e;
+  --rp-highlight-med: #403d52;
+  --rp-highlight-high: #524f67;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background: var(--rp-base);
+  margin: 0;
+  font-family: 'Fira Code', 'Fira Mono', monospace;
+  color: var(--rp-text);
+}
+
 .app {
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: 20px;
+  min-height: 100vh;
+  background: var(--rp-base);
 }
 
 .container {
   max-width: 1400px;
   margin: 0 auto;
+  padding: 20px;
 }
 
-.loading {
+/* Loading Screen */
+.loading-screen {
   display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100vh;
-  font-size: 24px;
-  color: #e0def4; /* Soft text color */
-  font-family: 'Fira Code', 'Fira Mono', monospace;
   flex-direction: column;
-  gap: 20px;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  background: var(--rp-base);
 }
 
 .loading-spinner {
   width: 50px;
   height: 50px;
-  border: 5px solid rgba(235, 188, 186, 0.3); /* Rose with opacity */
+  border: 3px solid rgba(235, 188, 186, 0.3);
   border-radius: 50%;
-  border-top-color: #ebbcba; /* Rose */
+  border-top-color: var(--rp-rose);
   animation: spin 1s ease-in-out infinite;
 }
 
-@keyframes spin {
-  to { transform: rotate(360deg); }
+.loading-text {
+  margin-top: 20px;
+  color: var(--rp-text);
+  font-family: 'Fira Code', monospace;
 }
 
-.error {
-  background: #eb6f92; /* Love/Red */
-  color: #191724; /* Base background color for contrast */
-  padding: 20px;
-  border-radius: 10px;
+.retry-container {
+  margin-top: 20px;
   text-align: center;
-  margin: 20px;
-  font-size: 18px;
-  font-family: 'Fira Code', 'Fira Mono', monospace;
-  border: 1px solid #f6c177; /* Gold accent */
 }
 
+.retry-warning {
+  color: var(--rp-gold);
+}
+
+.retry-button {
+  margin-top: 10px;
+  padding: 10px 20px;
+  background: var(--rp-pine);
+  color: var(--rp-text);
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-family: 'Fira Code', monospace;
+}
+
+.retry-button:hover {
+  background: var(--rp-iris);
+  color: var(--rp-base);
+}
+
+/* Warning Banner */
+.warning-banner {
+  background: var(--rp-gold);
+  color: var(--rp-base);
+  padding: 10px;
+  margin: 10px 0;
+  border-radius: 5px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: 'Fira Code', monospace;
+}
+
+.retry-link {
+  margin-left: auto;
+  padding: 5px 10px;
+  background: var(--rp-base);
+  color: var(--rp-gold);
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+  font-family: 'Fira Code', monospace;
+}
+
+.retry-link:hover {
+  opacity: 0.9;
+}
+
+/* Error Message */
+.error-message {
+  background: var(--rp-love);
+  color: var(--rp-base);
+  padding: 10px;
+  margin: 10px 0;
+  border-radius: 5px;
+  font-family: 'Fira Code', monospace;
+}
+
+/* Dashboard Header */
+.dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  gap: 10px;
+}
+
+.filter-section {
+  flex: 1;
+}
+
+/* Export Button */
+.export-button {
+  padding: 10px 20px;
+  background: var(--rp-pine);
+  color: var(--rp-text);
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-family: 'Fira Code', monospace;
+  transition: all 0.3s;
+  height: fit-content;
+  margin-top: 30px;
+}
+
+.export-button:hover {
+  background: var(--rp-iris);
+  color: var(--rp-base);
+}
+
+/* Refresh Button */
 .refresh-btn {
   position: fixed;
   bottom: 30px;
   right: 30px;
-  background: #31748f; /* Pine */
-  color: #e0def4; /* Soft text */
+  background: var(--rp-pine);
+  color: var(--rp-text);
   border: none;
   border-radius: 50px;
   padding: 15px 30px;
@@ -61,26 +181,54 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  box-shadow: 0 5px 20px rgba(25, 23, 36, 0.5); /* Base color shadow */
+  box-shadow: 0 5px 20px rgba(25, 23, 36, 0.5);
   transition: all 0.3s;
   z-index: 1000;
-  font-family: 'Fira Code', 'Fira Mono', monospace;
+  font-family: 'Fira Code', monospace;
 }
 
-.refresh-btn:hover {
+.refresh-btn:hover:not(:disabled) {
   transform: scale(1.05);
-  background: #c4a7e7; /* Iris/Purple */
-  color: #191724; /* Base background */
+  background: var(--rp-iris);
+  color: var(--rp-base);
 }
 
+.refresh-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Animations */
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.spin {
+  animation: spin 1s linear infinite;
+}
+
+/* Responsive */
 @media (max-width: 768px) {
-  .app {
+  .container {
     padding: 10px;
+  }
+
+  .dashboard-header {
+    flex-direction: column;
+  }
+
+  .export-button {
+    margin-top: 0;
+    width: 100%;
+    justify-content: center;
   }
 
   .refresh-btn {
     bottom: 20px;
     right: 20px;
     padding: 12px 20px;
+    font-size: 14px;
   }
 }

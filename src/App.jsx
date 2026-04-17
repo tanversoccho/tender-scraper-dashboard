@@ -14,20 +14,6 @@ import { memoryService } from './services/memoryService';
 
 const API_BASE_URL = 'http://localhost:5000/api';
 
-// Rosé Pine color palette
-const colors = {
-  base: '#191724',
-  surface: '#1f1d2e',
-  rose: '#ebbcba',
-  pine: '#31748f',
-  gold: '#f6c177',
-  love: '#eb6f92',
-  iris: '#c4a7e7',
-  text: '#e0def4',
-  muted: '#908caa',
-  overlay: '#26233a'
-};
-
 // Main App Content with filters
 function AppContent() {
   const { generalFilters, activeMode, applyFilters } = useFilters();
@@ -45,13 +31,12 @@ function AppContent() {
   // Apply filters to data whenever they change
   useEffect(() => {
     if (Object.keys(tenderData).length === 0) return;
-    
+
     console.log('Applying filters to dashboard data...');
     const filtered = {};
-    
+
     Object.keys(tenderData).forEach(source => {
       if (Array.isArray(tenderData[source])) {
-        // Apply filters to each source's tenders
         filtered[source] = applyFilters(
           tenderData[source].map(item => ({ ...item, source })),
           torService,
@@ -59,7 +44,7 @@ function AppContent() {
         );
       }
     });
-    
+
     setFilteredData(filtered);
   }, [tenderData, generalFilters, activeMode, applyFilters]);
 
@@ -109,7 +94,6 @@ function AppContent() {
       setScrapers(scraperList);
       if (scraperList.length > 0) {
         setActiveTab(scraperList[0].name);
-        // After setting scrapers, fetch data
         fetchAllData();
       } else {
         setError('No scrapers found on backend');
@@ -117,7 +101,6 @@ function AppContent() {
       }
     } catch (err) {
       console.error('Error fetching scrapers:', err);
-      // Fallback to default scrapers if API fails
       const defaultScrapers = [
         { name: 'bdjobs', display_name: 'BD Jobs' },
         { name: 'care', display_name: 'CARE' },
@@ -253,7 +236,6 @@ function AppContent() {
     checkApiHealth();
   };
 
-  // Get unique sources from data for filter bar
   const getAvailableSources = () => {
     const sources = new Set();
     Object.keys(tenderData).forEach(source => {
@@ -264,236 +246,95 @@ function AppContent() {
     return Array.from(sources);
   };
 
-  // Show loading state
   if (loading && !initialized) {
     return (
-      <div className="app" style={{ background: colors.base, minHeight: '100vh' }}>
-        <div className="loading-screen" style={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          height: '100vh',
-          background: colors.base
-        }}>
-          <div className="loading-spinner" style={{
-            width: '50px',
-            height: '50px',
-            border: `3px solid ${colors.rose}30`,
-            borderRadius: '50%',
-            borderTopColor: colors.rose,
-            animation: 'spin 1s ease-in-out infinite'
-          }}></div>
-          <div style={{ marginTop: '20px', color: colors.text, fontFamily: 'Fira Code, monospace' }}>
-            Loading tender dashboard...
-          </div>
-          {apiStatus === 'disconnected' && (
-            <div style={{ marginTop: '20px', textAlign: 'center' }}>
-              <p style={{ color: colors.gold }}>⚠️ Backend server not running</p>
-              <button
-                onClick={handleRetryConnection}
-                style={{
-                  marginTop: '10px',
-                  padding: '10px 20px',
-                  background: colors.pine,
-                  color: colors.text,
-                  border: 'none',
-                  borderRadius: '5px',
-                  cursor: 'pointer',
-                  fontFamily: 'Fira Code, monospace'
-                }}
-              >
-                Retry Connection
-              </button>
-            </div>
-          )}
+      <div className="app">
+      <div className="loading-screen">
+      <div className="loading-spinner"></div>
+      <div className="loading-text">Loading tender dashboard...</div>
+      {apiStatus === 'disconnected' && (
+        <div className="retry-container">
+        <p className="retry-warning">⚠️ Backend server not running</p>
+        <button className="retry-button" onClick={handleRetryConnection}>
+        Retry Connection
+        </button>
         </div>
+      )}
+      </div>
       </div>
     );
   }
 
-  // If showing export page, render it
   if (showExportPage) {
     return <DataExportPage onClose={() => setShowExportPage(false)} />;
   }
 
-  // Main dashboard view
   return (
-    <div className="app" style={{ background: colors.base, minHeight: '100vh' }}>
-      <div className="container">
-        {apiStatus === 'disconnected' && (
-          <div className="warning-banner" style={{
-            background: colors.gold,
-            color: colors.base,
-            padding: '10px',
-            margin: '10px 0',
-            borderRadius: '5px',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '10px',
-            fontFamily: 'Fira Code, monospace'
-          }}>
-            <FiAlertCircle />
-            <span>Backend server is not running. Please start it with 'cd backend && python run.py'</span>
-            <button
-              onClick={handleRetryConnection}
-              style={{
-                marginLeft: 'auto',
-                padding: '5px 10px',
-                background: colors.base,
-                color: colors.gold,
-                border: 'none',
-                borderRadius: '3px',
-                cursor: 'pointer',
-                fontFamily: 'Fira Code, monospace'
-              }}
-            >
-              Retry
-            </button>
-          </div>
-        )}
-
-        {error && (
-          <div className="error" style={{
-            background: colors.love,
-            color: colors.base,
-            padding: '10px',
-            margin: '10px 0',
-            borderRadius: '5px',
-            fontFamily: 'Fira Code, monospace'
-          }}>
-            {error}
-          </div>
-        )}
-
-        {/* Export Button and Filter Toggle */}
-        <div style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          marginBottom: '20px',
-          gap: '10px'
-        }}>
-          <div style={{ flex: 1 }}>
-            {/* Filter Bar Component */}
-            <FilterBar 
-              sources={getAvailableSources()} 
-              showStatusFilter={true}
-            />
-          </div>
-          <button
-            onClick={() => setShowExportPage(true)}
-            style={{
-              padding: '10px 20px',
-              background: colors.pine,
-              color: colors.text,
-              border: 'none',
-              borderRadius: '5px',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '5px',
-              fontFamily: 'Fira Code, monospace',
-              transition: 'all 0.3s',
-              height: 'fit-content',
-              marginTop: '30px'
-            }}
-            onMouseEnter={(e) => {
-              e.target.style.background = colors.iris;
-              e.target.style.color = colors.base;
-            }}
-            onMouseLeave={(e) => {
-              e.target.style.background = colors.pine;
-              e.target.style.color = colors.text;
-            }}
-          >
-            <FiDownload /> Export Data
-          </button>
-        </div>
-
-        <StatsGrid
-          scrapers={scrapers}
-          tenderData={filteredData}  // Use filtered data instead of raw data
-          lastUpdated={lastUpdated}
-        />
-
-        <TabNavigation
-          activeTab={activeTab}
-          setActiveTab={setActiveTab}
-          scrapers={scrapers}
-        />
-
-        {activeTab && (
-          <DynamicTab
-            scraperName={activeTab}
-            displayName={scrapers.find(s => s.name === activeTab)?.display_name || activeTab}
-            data={filteredData[activeTab] || []}  // Use filtered data
-          />
-        )}
-
-        <Footer lastUpdated={lastUpdated} />
-
-        <button
-          className="refresh-btn"
-          onClick={handleRefresh}
-          disabled={loading}
-          style={{
-            position: 'fixed',
-            bottom: '20px',
-            right: '20px',
-            padding: '10px 20px',
-            background: colors.pine,
-            color: colors.text,
-            border: 'none',
-            borderRadius: '5px',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '5px',
-            fontFamily: 'Fira Code, monospace',
-            boxShadow: `0 5px 15px ${colors.base}80`,
-            transition: 'all 0.3s'
-          }}
-          onMouseEnter={(e) => {
-            e.target.style.background = colors.iris;
-            e.target.style.color = colors.base;
-          }}
-          onMouseLeave={(e) => {
-            e.target.style.background = colors.pine;
-            e.target.style.color = colors.text;
-          }}
-        >
-          <FiRefreshCw style={{ 
-            animation: loading ? 'spin 1s linear infinite' : 'none',
-            color: 'inherit'
-          }} />
-          {loading ? 'Refreshing...' : 'Refresh Data'}
-        </button>
+    <div className="app">
+    <div className="container">
+    {apiStatus === 'disconnected' && (
+      <div className="warning-banner">
+      <FiAlertCircle />
+      <span>Backend server is not running. Please start it with 'cd backend && python run.py'</span>
+      <button className="retry-link" onClick={handleRetryConnection}>
+      Retry
+      </button>
       </div>
+    )}
 
-      <style>{`
-        @keyframes spin {
-          to { transform: rotate(360deg); }
-        }
-        body {
-          background: ${colors.base};
-          margin: 0;
-          font-family: 'Fira Code', monospace;
-        }
-        .container {
-          max-width: 1400px;
-          margin: 0 auto;
-          padding: 20px;
-        }
-      `}</style>
+    {error && (
+      <div className="error-message">
+      {error}
+      </div>
+    )}
+
+    <div className="export-button-container">
+    <button className="export-button" onClick={() => setShowExportPage(true)}>
+    <FiDownload /> Export Data
+    </button>
+    </div>
+
+    <StatsGrid
+    scrapers={scrapers}
+    tenderData={filteredData}
+    lastUpdated={lastUpdated}
+    />
+    <div className="filter-section">
+    <FilterBar 
+    sources={getAvailableSources()} 
+    showStatusFilter={true}
+    />
+    </div>
+
+    <TabNavigation
+    activeTab={activeTab}
+    setActiveTab={setActiveTab}
+    scrapers={scrapers}
+    />
+
+    {activeTab && (
+      <DynamicTab
+      scraperName={activeTab}
+      displayName={scrapers.find(s => s.name === activeTab)?.display_name || activeTab}
+      data={filteredData[activeTab] || []}
+      />
+    )}
+
+    <Footer lastUpdated={lastUpdated} />
+
+    <button className="refresh-btn" onClick={handleRefresh} disabled={loading}>
+    <FiRefreshCw className={loading ? 'spin' : ''} />
+    {loading ? 'Refreshing...' : 'Refresh Data'}
+    </button>
+    </div>
     </div>
   );
 }
 
-// Main App component wrapped with FilterProvider
 function App() {
   return (
     <FilterProvider>
-      <AppContent />
+    <AppContent />
     </FilterProvider>
   );
 }
