@@ -37,7 +37,8 @@ const FilterBar = ({ sources = [], showStatusFilter = true }) => {
   };
 
   const handleDocumentTypeChange = (e) => {
-    setTorFilters({ ...torFilters, documentType: e.target.value });
+    const options = Array.from(e.target.selectedOptions, option => option.value);
+    setTorFilters({ ...torFilters, documentTypes: options });
   };
 
   const handleMinKeywordsChange = (e) => {
@@ -78,7 +79,7 @@ const FilterBar = ({ sources = [], showStatusFilter = true }) => {
       generalFilters.dateTo !== '' ||
       generalFilters.status !== 'all' ||
       (activeMode === 'tor' && (
-        torFilters.documentType !== 'all' ||
+        torFilters.documentTypes?.length > 0 ||
         torFilters.showOnlyNew ||
         torFilters.showTorOnly !== true ||
         torFilters.minKeywords > 1 ||
@@ -89,7 +90,7 @@ const FilterBar = ({ sources = [], showStatusFilter = true }) => {
 
   const hasActiveTorFilters = () => {
     return (
-      torFilters.documentType !== 'all' ||
+      torFilters.documentTypes?.length > 0 ||
       torFilters.showOnlyNew ||
       torFilters.showTorOnly !== true ||
       torFilters.minKeywords > 1 ||
@@ -212,18 +213,21 @@ const FilterBar = ({ sources = [], showStatusFilter = true }) => {
         <div className="tor-filters-grid">
         {/* Document Type Filter */}
         <div className="filter-group">
-        <label className="filter-label">Document Type</label>
+        <label className="filter-label">Document Type {torFilters.documentTypes?.length > 0 && `(${torFilters.documentTypes.length} selected)`}</label>
         <select
-        className="filter-select"
-        value={torFilters.documentType}
+        className="filter-select filter-multiselect"
+        multiple
+        size="4"
+        value={torFilters.documentTypes || []}
         onChange={handleDocumentTypeChange}
         >
-        <option value="all">All Types</option>
         <option value="ToR">📋 Terms of Reference (ToR)</option>
         <option value="RFP">📄 Request for Proposal (RFP)</option>
         <option value="EOI">✉ Expression of Interest (EOI)</option>
         <option value="RFQ">💰 Request for Quotation (RFQ)</option>
+        <option value="Other">📄 Other</option>
         </select>
+        <small className="filter-hint">Hold Ctrl (Windows) or Cmd (Mac) to select multiple</small>
         </div>
 
         {/* Minimum Keywords Filter */}
@@ -289,14 +293,14 @@ const FilterBar = ({ sources = [], showStatusFilter = true }) => {
         )}
         </div>
 
-        {/* Preset Filters */}
+        {/* Preset Filters - Updated to use documentTypes array */}
         <div className="preset-filters">
         <span className="preset-label">Quick Presets:</span>
         <button
         className="preset-btn"
         onClick={() => {
           setTorFilters({
-            documentType: 'ToR',
+            documentTypes: ['ToR'],
             showTorOnly: true,
             showOnlyNew: true,
             minKeywords: 1,
@@ -310,7 +314,7 @@ const FilterBar = ({ sources = [], showStatusFilter = true }) => {
         className="preset-btn"
         onClick={() => {
           setTorFilters({
-            documentType: 'all',
+            documentTypes: ['ToR', 'RFP', 'EOI'],
             showTorOnly: true,
             showOnlyNew: false,
             minKeywords: 2,
@@ -324,7 +328,7 @@ const FilterBar = ({ sources = [], showStatusFilter = true }) => {
         className="preset-btn"
         onClick={() => {
           setTorFilters({
-            documentType: 'all',
+            documentTypes: [],
             showTorOnly: true,
             showOnlyNew: false,
             minKeywords: 1,
@@ -338,7 +342,7 @@ const FilterBar = ({ sources = [], showStatusFilter = true }) => {
         className="preset-btn"
         onClick={() => {
           setTorFilters({
-            documentType: 'EOI',
+            documentTypes: ['EOI'],
             showTorOnly: true,
             showOnlyNew: false,
             minKeywords: 1,
@@ -402,11 +406,11 @@ const FilterBar = ({ sources = [], showStatusFilter = true }) => {
         </button>
         </span>
       )}
-      {activeMode === 'tor' && torFilters.documentType !== 'all' && (
+      {activeMode === 'tor' && torFilters.documentTypes && torFilters.documentTypes.length > 0 && (
         <span className="filter-tag tor-tag">
-        Type: {torFilters.documentType}
+        Types: {torFilters.documentTypes.join(', ')}
         <button
-        onClick={() => setTorFilters({ ...torFilters, documentType: 'all' })}
+        onClick={() => setTorFilters({ ...torFilters, documentTypes: [] })}
         className="remove-filter"
         >
         ×

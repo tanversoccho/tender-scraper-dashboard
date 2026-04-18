@@ -36,9 +36,9 @@ export const FilterProvider = ({ children }) => {
     status: savedFilters?.general?.status || 'all'
   });
 
-  // ToR specific filters (used in export page)
+  // ToR specific filters (used in export page) - Changed to documentTypes array
   const [torFilters, setTorFilters] = useState({
-    documentType: savedFilters?.tor?.documentType || 'all',
+    documentTypes: savedFilters?.tor?.documentTypes || [],
     showOnlyNew: savedFilters?.tor?.showOnlyNew || false,
     showTorOnly: savedFilters?.tor?.showTorOnly !== undefined ? savedFilters.tor.showTorOnly : true,
     minKeywords: savedFilters?.tor?.minKeywords || 1,
@@ -69,7 +69,7 @@ export const FilterProvider = ({ children }) => {
       status: 'all'
     });
     setTorFilters({
-      documentType: 'all',
+      documentTypes: [],  // Changed from documentType: 'all' to empty array
       showOnlyNew: false,
       showTorOnly: true,
       minKeywords: 1,
@@ -128,10 +128,12 @@ export const FilterProvider = ({ children }) => {
         filtered = filtered.filter(t => torService.isTorRelevant(t));
       }
 
-      if (torFilters.documentType !== 'all' && torService) {
-        filtered = filtered.filter(t =>
-          torService.detectDocumentType(t) === torFilters.documentType
-        );
+      // Changed: Check if document type matches any of the selected types
+      if (torFilters.documentTypes && torFilters.documentTypes.length > 0 && torService) {
+        filtered = filtered.filter(t => {
+          const docType = torService.detectDocumentType(t);
+          return torFilters.documentTypes.includes(docType);
+        });
       }
 
       if (torFilters.showOnlyNew && memoryService) {
